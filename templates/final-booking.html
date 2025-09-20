@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Booking - Travel Planner</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+            color: #6c757d;
+        }
+
+        .progress-step.completed {
+            color: #28a745;
+        }
+
+        .progress-step.active {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-weight: 600;
+        }
+
+        .progress-step.completed .step-number {
+            background: #28a745;
+            color: white;
+        }
+
+        .progress-step.active .step-number {
+            background: #667eea;
+            color: white;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .booking-summary {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .summary-row:last-child {
+            border-bottom: none;
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: #667eea;
+        }
+
+        .payment-section {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .payment-section h3 {
+            margin: 0 0 20px;
+            color: #495057;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .payment-methods {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .payment-method {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .payment-method:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .payment-method.selected {
+            border-color: #667eea;
+            background: #e7f3ff;
+        }
+
+        .payment-method i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            padding: 30px 0;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .security-notice {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .security-notice i {
+            color: #667eea;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .loading-content i {
+            font-size: 3rem;
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .payment-methods {
+                flex-direction: column;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-credit-card"></i> Complete Your Booking</h1>
+            <p>Secure payment for your amazing travel experience</p>
+        </div>
+
+        <div class="progress-bar">
+            <div class="progress-step completed">
+                <div class="step-number">1</div>
+                <span>Planning</span>
+            </div>
+            <div class="progress-step completed">
+                <div class="step-number">2</div>
+                <span>Flights</span>
+            </div>
+            <div class="progress-step completed">
+                <div class="step-number">3</div>
+                <span>Hotels</span>
+            </div>
+            <div class="progress-step completed">
+                <div class="step-number">4</div>
+                <span>Review</span>
+            </div>
+            <div class="progress-step completed">
+                <div class="step-number">5</div>
+                <span>Itinerary</span>
+            </div>
+            <div class="progress-step completed">
+                <div class="step-number">6</div>
+                <span>Details</span>
+            </div>
+            <div class="progress-step active">
+                <div class="step-number">7</div>
+                <span>Payment</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- Booking Summary -->
+            <div class="booking-summary">
+                <h3><i class="fas fa-file-invoice"></i> Booking Summary</h3>
+                <div class="summary-row">
+                    <span>Trip Destination:</span>
+                    <span id="tripDestination">Loading...</span>
+                </div>
+                <div class="summary-row">
+                    <span>Travel Dates:</span>
+                    <span id="travelDates">Loading...</span>
+                </div>
+                <div class="summary-row">
+                    <span>Number of Travelers:</span>
+                    <span id="numTravelers">Loading...</span>
+                </div>
+                <div class="summary-row">
+                    <span>Flight Cost:</span>
+                    <span id="flightCost">₹0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Hotel Cost:</span>
+                    <span id="hotelCost">₹0</span>
+                </div>
+                <div class="summary-row">
+                    <span>Total Amount:</span>
+                    <span id="totalAmount">₹0</span>
+                </div>
+            </div>
+
+            <!-- Passenger Details Summary -->
+            <div id="passengerSummary" class="booking-summary" style="display: none;">
+                <h3><i class="fas fa-users"></i> Passenger Details</h3>
+                <div id="passengerList">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div class="summary-row">
+                    <span>Contact Email:</span>
+                    <span id="contactEmailDisplay">Loading...</span>
+                </div>
+                <div class="summary-row">
+                    <span>Contact Phone:</span>
+                    <span id="contactPhoneDisplay">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Payment Section -->
+            <div class="payment-section">
+                <h3><i class="fas fa-lock"></i> Payment Information</h3>
+                
+                <div class="payment-methods">
+                    <div class="payment-method selected" data-method="card">
+                        <i class="fas fa-credit-card"></i>
+                        <div>Credit/Debit Card</div>
+                    </div>
+                    <div class="payment-method" data-method="upi">
+                        <i class="fas fa-mobile-alt"></i>
+                        <div>UPI Payment</div>
+                    </div>
+                    <div class="payment-method" data-method="wallet">
+                        <i class="fas fa-wallet"></i>
+                        <div>Digital Wallet</div>
+                    </div>
+                </div>
+
+                <form id="paymentForm">
+                    <div id="cardPayment">
+                        <div class="form-group">
+                            <label for="cardNumber">Card Number</label>
+                            <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expiryDate">Expiry Date</label>
+                                <input type="text" id="expiryDate" placeholder="MM/YY" maxlength="5">
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV</label>
+                                <input type="text" id="cvv" placeholder="123" maxlength="3">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="cardName">Cardholder Name</label>
+                            <input type="text" id="cardName" placeholder="Full Name as on Card">
+                        </div>
+                    </div>
+
+                    <div id="upiPayment" style="display: none;">
+                        <div class="form-group">
+                            <label for="upiId">UPI ID</label>
+                            <input type="text" id="upiId" placeholder="yourname@paytm">
+                        </div>
+                    </div>
+
+                    <div id="walletPayment" style="display: none;">
+                        <div class="form-group">
+                            <label for="walletType">Select Wallet</label>
+                            <select id="walletType">
+                                <option value="paytm">Paytm</option>
+                                <option value="phonepe">PhonePe</option>
+                                <option value="googlepay">Google Pay</option>
+                                <option value="amazonpay">Amazon Pay</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="security-notice">
+                <i class="fas fa-shield-alt"></i>
+                <div><strong>Secure Payment</strong></div>
+                <div>Your payment information is encrypted and secure. This is a demo simulation - no real payment will be processed.</div>
+            </div>
+
+            <!-- Success/Error Messages -->
+            <div id="successMessage" class="success-message">
+                <i class="fas fa-check-circle"></i>
+                <strong>Payment Successful!</strong> Your booking has been confirmed. 
+                <br><small>📄 Your invoice PDF is downloading automatically. Redirecting to home page...</small>
+            </div>
+
+            <div id="errorMessage" class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Payment Failed!</strong> <span id="errorText">Please try again.</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <a href="/itinerary" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Itinerary
+                </a>
+                <button id="payNowBtn" class="btn btn-primary" onclick="processPayment()">
+                    <i class="fas fa-credit-card"></i>
+                    Pay Now
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h3>Processing Payment...</h3>
+            <p>Please wait while we process your secure payment.</p>
+        </div>
+    </div>
+
+    <script>
+        class FinalBookingManager {
+            constructor() {
+                this.travelData = null;
+                this.selectedFlight = null;
+                this.selectedHotel = null;
+                this.passengerDetails = null;
+                this.totalAmount = 0;
+                
+                this.init();
+            }
+
+            init() {
+                this.loadBookingData();
+                this.setupEventListeners();
+                this.populateBookingSummary();
+            }
+
+            loadBookingData() {
+                // Load data from session storage using correct keys
+                try {
+                    const travelDataStr = sessionStorage.getItem('travel_planner_travel_data');
+                    const flightDataStr = sessionStorage.getItem('travel_planner_selected_flight');
+                    const hotelDataStr = sessionStorage.getItem('travel_planner_selected_hotel');
+                    const passengerDataStr = sessionStorage.getItem('travel_planner_passenger_details');
+
+                    if (travelDataStr) this.travelData = JSON.parse(travelDataStr);
+                    if (flightDataStr) this.selectedFlight = JSON.parse(flightDataStr);
+                    if (hotelDataStr) this.selectedHotel = JSON.parse(hotelDataStr);
+                    if (passengerDataStr) this.passengerDetails = JSON.parse(passengerDataStr);
+
+                    console.log('Loaded booking data:', {
+                        travelData: this.travelData,
+                        flight: this.selectedFlight,
+                        hotel: this.selectedHotel,
+                        passengers: this.passengerDetails
+                    });
+                    
+                    // Validate that passenger details exist
+                    if (!this.passengerDetails) {
+                        console.warn('⚠️ No passenger details found - redirecting to passenger details page');
+                        window.location.href = '/passenger-details';
+                        return;
+                    }
+                    
+                    // Debug: log all session storage keys to verify
+                    console.log('All session storage keys:', Object.keys(sessionStorage));
+                } catch (error) {
+                    console.error('Error loading booking data:', error);
+                }
+            }
+
+            setupEventListeners() {
+                // Payment method selection
+                document.querySelectorAll('.payment-method').forEach(method => {
+                    method.addEventListener('click', () => {
+                        document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('selected'));
+                        method.classList.add('selected');
+                        this.showPaymentForm(method.dataset.method);
+                    });
+                });
+
+                // Form validation and formatting
+                const cardNumber = document.getElementById('cardNumber');
+                if (cardNumber) {
+                    cardNumber.addEventListener('input', (e) => {
+                        e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+                    });
+                }
+
+                const expiryDate = document.getElementById('expiryDate');
+                if (expiryDate) {
+                    expiryDate.addEventListener('input', (e) => {
+                        e.target.value = e.target.value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
+                    });
+                }
+
+                const cvv = document.getElementById('cvv');
+                if (cvv) {
+                    cvv.addEventListener('input', (e) => {
+                        e.target.value = e.target.value.replace(/\D/g, '');
+                    });
+                }
+            }
+
+            showPaymentForm(method) {
+                // Hide all payment forms
+                document.getElementById('cardPayment').style.display = 'none';
+                document.getElementById('upiPayment').style.display = 'none';
+                document.getElementById('walletPayment').style.display = 'none';
+
+                // Show selected payment form
+                switch (method) {
+                    case 'card':
+                        document.getElementById('cardPayment').style.display = 'block';
+                        break;
+                    case 'upi':
+                        document.getElementById('upiPayment').style.display = 'block';
+                        break;
+                    case 'wallet':
+                        document.getElementById('walletPayment').style.display = 'block';
+                        break;
+                }
+            }
+
+            populateBookingSummary() {
+                // Populate trip details
+                if (this.travelData) {
+                    document.getElementById('tripDestination').textContent = this.travelData.destination || 'N/A';
+                    document.getElementById('travelDates').textContent = 
+                        `${this.travelData.startDate || 'N/A'} to ${this.travelData.endDate || 'N/A'}`;
+                    document.getElementById('numTravelers').textContent = this.travelData.travelers || 'N/A';
+                }
+
+                // Populate passenger details
+                if (this.passengerDetails) {
+                    this.populatePassengerSummary();
+                }
+
+                // Calculate costs
+                const flightCost = this.selectedFlight ? (this.selectedFlight.price * (this.travelData?.travelers || 1)) : 0;
+                const hotelCost = this.selectedHotel ? (this.selectedHotel.price_per_night * this.calculateNights() || 0) : 0;
+                this.totalAmount = flightCost + hotelCost;
+
+                // Display costs
+                document.getElementById('flightCost').textContent = this.formatCurrency(flightCost);
+                document.getElementById('hotelCost').textContent = this.formatCurrency(hotelCost);
+                document.getElementById('totalAmount').textContent = this.formatCurrency(this.totalAmount);
+            }
+
+            populatePassengerSummary() {
+                const passengerSummary = document.getElementById('passengerSummary');
+                const passengerList = document.getElementById('passengerList');
+                
+                if (!this.passengerDetails || !this.passengerDetails.passengers) {
+                    return;
+                }
+
+                // Show passenger summary section
+                passengerSummary.style.display = 'block';
+
+                // Populate passenger list
+                passengerList.innerHTML = this.passengerDetails.passengers.map(passenger => `
+                    <div class="summary-row">
+                        <span>Passenger ${passenger.passengerNumber}:</span>
+                        <span>${passenger.firstName} ${passenger.lastName}</span>
+                    </div>
+                `).join('');
+
+                // Populate contact information
+                document.getElementById('contactEmailDisplay').textContent = this.passengerDetails.contactInfo?.email || 'N/A';
+                document.getElementById('contactPhoneDisplay').textContent = this.passengerDetails.contactInfo?.phone || 'N/A';
+            }
+
+            calculateNights() {
+                if (!this.travelData?.startDate || !this.travelData?.endDate) return 7; // Default
+                const start = new Date(this.travelData.startDate);
+                const end = new Date(this.travelData.endDate);
+                return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            }
+
+            formatCurrency(amount) {
+                return new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: 'INR',
+                    minimumFractionDigits: 0
+                }).format(amount);
+            }
+
+            generatePDFInvoice(bookingConfirmation) {
+                try {
+                    const { jsPDF } = window.jspdf;
+                    const doc = new jsPDF();
+                    
+                    // PDF styling
+                    const primaryColor = [102, 126, 234]; // #667eea
+                    const textColor = [33, 37, 41]; // #212529
+                    const lightGray = [248, 249, 250]; // #f8f9fa
+                    
+                    // Header with logo/branding
+                    doc.setFillColor(...primaryColor);
+                    doc.rect(0, 0, 210, 40, 'F');
+                    
+                    doc.setTextColor(255, 255, 255);
+                    doc.setFontSize(24);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('TRAVEL BOOKING INVOICE', 20, 25);
+                    
+                    // Invoice details
+                    doc.setTextColor(...textColor);
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(`Invoice #: ${bookingConfirmation.bookingId}`, 150, 15);
+                    doc.text(`Date: ${new Date(bookingConfirmation.paymentDate).toLocaleDateString()}`, 150, 22);
+                    doc.text(`Status: ${bookingConfirmation.status.toUpperCase()}`, 150, 29);
+                    
+                    // Customer details section
+                    let yPosition = 60;
+                    doc.setFontSize(16);
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('BOOKING DETAILS', 20, yPosition);
+                    
+                    yPosition += 15;
+                    doc.setFontSize(12);
+                    doc.setFont('helvetica', 'normal');
+                    
+                    if (this.travelData) {
+                        doc.text(`Destination: ${this.travelData.destination || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Travel Dates: ${this.travelData.startDate || 'N/A'} to ${this.travelData.endDate || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Number of Travelers: ${this.travelData.travelers || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Trip Theme: ${this.travelData.theme || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Duration: ${this.travelData.duration || 'N/A'} days`, 20, yPosition);
+                        yPosition += 15;
+                    }
+
+                    // Passenger details
+                    if (this.passengerDetails && this.passengerDetails.passengers) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('PASSENGER DETAILS', 20, yPosition);
+                        yPosition += 10;
+                        
+                        doc.setFont('helvetica', 'normal');
+                        this.passengerDetails.passengers.forEach(passenger => {
+                            doc.text(`${passenger.passengerNumber}. ${passenger.firstName} ${passenger.lastName} (${passenger.gender}, DOB: ${passenger.dateOfBirth})`, 20, yPosition);
+                            yPosition += 6;
+                            doc.text(`   ID: ${passenger.idType.toUpperCase()} - ${passenger.idNumber}`, 20, yPosition);
+                            yPosition += 8;
+                        });
+                        
+                        // Contact information
+                        doc.text(`Contact Email: ${this.passengerDetails.contactInfo?.email || 'N/A'}`, 20, yPosition);
+                        yPosition += 6;
+                        doc.text(`Contact Phone: ${this.passengerDetails.contactInfo?.phone || 'N/A'}`, 20, yPosition);
+                        yPosition += 15;
+                    }
+                    
+                    // Flight details
+                    if (this.selectedFlight) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('FLIGHT DETAILS', 20, yPosition);
+                        yPosition += 10;
+                        
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(`Airline: ${this.selectedFlight.airline || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Flight Number: ${this.selectedFlight.number || this.selectedFlight.flight_number || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Departure: ${this.selectedFlight.departure?.time || this.selectedFlight.departure_time || 'N/A'} from ${this.selectedFlight.departure?.airport || this.selectedFlight.departure_airport || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Arrival: ${this.selectedFlight.arrival?.time || this.selectedFlight.arrival_time || 'N/A'} at ${this.selectedFlight.arrival?.airport || this.selectedFlight.arrival_airport || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Duration: ${this.selectedFlight.duration || 'N/A'}`, 20, yPosition);
+                        yPosition += 15;
+                    }
+                    
+                    // Hotel details
+                    if (this.selectedHotel) {
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('HOTEL DETAILS', 20, yPosition);
+                        yPosition += 10;
+                        
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(`Hotel: ${this.selectedHotel.name || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Location: ${this.selectedHotel.location || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Room Type: ${this.selectedHotel.roomType || this.selectedHotel.room_type || 'Standard Room'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Rating: ${this.selectedHotel.rating || 'N/A'}`, 20, yPosition);
+                        yPosition += 8;
+                        doc.text(`Nights: ${this.calculateNights()}`, 20, yPosition);
+                        yPosition += 15;
+                    }
+                    
+                    // Cost breakdown table
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('COST BREAKDOWN', 20, yPosition);
+                    yPosition += 10;
+                    
+                    // Table header
+                    doc.setFillColor(...lightGray);
+                    doc.rect(20, yPosition, 170, 10, 'F');
+                    doc.setFont('helvetica', 'bold');
+                    doc.text('Description', 25, yPosition + 7);
+                    doc.text('Amount', 160, yPosition + 7);
+                    yPosition += 15;
+                    
+                    // Flight cost
+                    doc.setFont('helvetica', 'normal');
+                    const flightCost = this.selectedFlight ? (this.selectedFlight.price * (this.travelData?.travelers || 1)) : 0;
+                    doc.text(`Flight Cost (${this.travelData?.travelers || 1} travelers)`, 25, yPosition);
+                    doc.text(this.formatCurrency(flightCost), 160, yPosition);
+                    yPosition += 8;
+                    
+                    // Hotel cost
+                    const hotelCost = this.selectedHotel ? (this.selectedHotel.price_per_night * this.calculateNights() || 0) : 0;
+                    doc.text(`Hotel Cost (${this.calculateNights()} nights)`, 25, yPosition);
+                    doc.text(this.formatCurrency(hotelCost), 160, yPosition);
+                    yPosition += 10;
+                    
+                    // Total line
+                    doc.setFont('helvetica', 'bold');
+                    doc.line(25, yPosition, 185, yPosition);
+                    yPosition += 8;
+                    doc.text('TOTAL AMOUNT PAID', 25, yPosition);
+                    doc.text(this.formatCurrency(this.totalAmount), 160, yPosition);
+                    
+                    // Footer
+                    yPosition += 30;
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text('Thank you for choosing our travel planning service!', 20, yPosition);
+                    yPosition += 6;
+                    doc.text('This is a demo invoice for educational purposes only.', 20, yPosition);
+                    yPosition += 6;
+                    doc.text('For support, contact: support@travelplanner.com', 20, yPosition);
+                    
+                    // Generate filename with booking ID and date
+                    const fileName = `Travel_Invoice_${bookingConfirmation.bookingId}_${new Date().toISOString().split('T')[0]}.pdf`;
+                    
+                    // Save the PDF
+                    doc.save(fileName);
+                    
+                    console.log('✅ PDF invoice generated successfully:', fileName);
+                    
+                } catch (error) {
+                    console.error('❌ Error generating PDF invoice:', error);
+                    // Don't block the flow if PDF generation fails
+                }
+            }
+
+            async processPayment() {
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                const payNowBtn = document.getElementById('payNowBtn');
+                const successMessage = document.getElementById('successMessage');
+                const errorMessage = document.getElementById('errorMessage');
+
+                try {
+                    // Show loading
+                    loadingOverlay.style.display = 'flex';
+                    payNowBtn.disabled = true;
+
+                    // Hide any previous messages
+                    successMessage.style.display = 'none';
+                    errorMessage.style.display = 'none';
+
+                    // Simulate payment processing
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+
+                    // For demo purposes, randomly succeed or fail
+                    const success = Math.random() > 0.1; // 90% success rate
+
+                    if (success) {
+                        // Hide loading
+                        loadingOverlay.style.display = 'none';
+                        
+                        // Show success message
+                        successMessage.style.display = 'block';
+                        
+                        // Store booking confirmation
+                        const bookingConfirmation = {
+                            bookingId: 'TRV' + Date.now(),
+                            amount: this.totalAmount,
+                            paymentDate: new Date().toISOString(),
+                            status: 'confirmed'
+                        };
+                        sessionStorage.setItem('booking_confirmation', JSON.stringify(bookingConfirmation));
+
+                        // Generate and download PDF invoice
+                        this.generatePDFInvoice(bookingConfirmation);
+
+                        // Redirect after 5 seconds (longer to allow PDF download)
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 5000);
+
+                    } else {
+                        throw new Error('Payment processing failed. Please try again.');
+                    }
+
+                } catch (error) {
+                    console.error('Payment error:', error);
+                    
+                    // Hide loading
+                    loadingOverlay.style.display = 'none';
+                    payNowBtn.disabled = false;
+                    
+                    // Show error message
+                    document.getElementById('errorText').textContent = error.message;
+                    errorMessage.style.display = 'block';
+                }
+            }
+        }
+
+        // Global function for button onclick
+        function processPayment() {
+            if (window.finalBookingManager) {
+                window.finalBookingManager.processPayment();
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.finalBookingManager = new FinalBookingManager();
+        });
+    </script>
+</body>
+</html>

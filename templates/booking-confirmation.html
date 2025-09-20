@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Confirmation - Travel Planner</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1><i class="fas fa-check-circle"></i> Booking Confirmation</h1>
+            <p>Review your selections and confirm your booking</p>
+        </header>
+
+        <!-- Progress Indicator -->
+        <div class="progress-container">
+            <div class="progress-step completed">1</div>
+            <div class="progress-line completed"></div>
+            <div class="progress-step completed">2</div>
+            <div class="progress-line completed"></div>
+            <div class="progress-step completed">3</div>
+            <div class="progress-line active"></div>
+            <div class="progress-step active">4</div>
+            <div class="progress-line"></div>
+            <div class="progress-step">5</div>
+        </div>
+
+        <div class="step-labels">
+            <span>Planning</span>
+            <span>Flights</span>
+            <span>Hotels</span>
+            <span class="active">Confirmation</span>
+            <span>Itinerary</span>
+        </div>
+
+        <div class="booking-summary">
+            <!-- Trip Overview -->
+            <div class="summary-section">
+                <h2><i class="fas fa-info-circle"></i> Trip Overview</h2>
+                <div class="trip-overview-card">
+                    <div class="overview-item">
+                        <span class="label">Destination:</span>
+                        <span class="value" id="destinationSummary">-</span>
+                    </div>
+                    <div class="overview-item">
+                        <span class="label">From:</span>
+                        <span class="value" id="fromCitySummary">-</span>
+                    </div>
+                    <div class="overview-item">
+                        <span class="label">Duration:</span>
+                        <span class="value" id="durationSummary">-</span>
+                    </div>
+                    <div class="overview-item">
+                        <span class="label">Travelers:</span>
+                        <span class="value" id="travelersSummary">-</span>
+                    </div>
+                    <div class="overview-item">
+                        <span class="label">Theme:</span>
+                        <span class="value" id="themeSummary">-</span>
+                    </div>
+                    <div class="overview-item">
+                        <span class="label">Budget:</span>
+                        <span class="value" id="budgetSummary">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flight Selection Summary -->
+            <div class="summary-section">
+                <h2><i class="fas fa-plane"></i> Selected Flight</h2>
+                <div class="selection-card" id="flightSummaryCard">
+                    <div class="selection-details">
+                        <div class="airline-info">
+                            <h3 id="flightAirline">-</h3>
+                            <span class="flight-number" id="flightNumber">-</span>
+                        </div>
+                        <div class="route-info">
+                            <div class="route-time">
+                                <span class="time" id="departureTime">-</span>
+                                <span class="airport" id="departureAirport">-</span>
+                            </div>
+                            <div class="route-arrow">
+                                <i class="fas fa-arrow-right"></i>
+                                <span class="duration" id="flightDuration">-</span>
+                            </div>
+                            <div class="route-time">
+                                <span class="time" id="arrivalTime">-</span>
+                                <span class="airport" id="arrivalAirport">-</span>
+                            </div>
+                        </div>
+                        <div class="price-info">
+                            <span class="price" id="flightPrice">₹0</span>
+                            <span class="per-person">per person</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hotel Selection Summary -->
+            <div class="summary-section">
+                <h2><i class="fas fa-bed"></i> Selected Hotel</h2>
+                <div class="selection-card" id="hotelSummaryCard">
+                    <div class="selection-details">
+                        <div class="hotel-info">
+                            <h3 id="hotelName">-</h3>
+                            <div class="hotel-rating" id="hotelRating">
+                                <!-- Stars will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="hotel-details">
+                            <div class="detail-item">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span id="hotelLocation">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-door-open"></i>
+                                <span id="roomType">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-users"></i>
+                                <span id="occupancy">-</span>
+                            </div>
+                        </div>
+                        <div class="amenities" id="hotelAmenities">
+                            <!-- Amenities will be populated by JavaScript -->
+                        </div>
+                        <div class="price-info">
+                            <span class="price" id="hotelPrice">₹0</span>
+                            <span class="per-night">per night</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cost Breakdown -->
+            <div class="summary-section">
+                <h2><i class="fas fa-calculator"></i> Cost Breakdown</h2>
+                <div class="cost-breakdown-card">
+                    <div class="cost-item">
+                        <span class="cost-label">Flight Cost:</span>
+                        <span class="cost-value" id="totalFlightCost">₹0</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="cost-label">Hotel Cost:</span>
+                        <span class="cost-value" id="totalHotelCost">₹0</span>
+                    </div>
+                    <div class="cost-item">
+                        <span class="cost-label">Estimated Activities:</span>
+                        <span class="cost-value" id="estimatedActivities">₹0</span>
+                    </div>
+                    <div class="cost-divider"></div>
+                    <div class="cost-item total-cost">
+                        <span class="cost-label">Total Estimated Cost:</span>
+                        <span class="cost-value" id="totalCost">₹0</span>
+                    </div>
+                    <div class="budget-comparison">
+                        <div class="budget-item">
+                            <span class="budget-label">Your Budget:</span>
+                            <span class="budget-value" id="originalBudget">₹0</span>
+                        </div>
+                        <div class="budget-status" id="budgetStatus">
+                            <!-- Will show over/under budget status -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back to Hotels
+                </button>
+                <button type="button" class="btn btn-primary" id="confirmBookingBtn" onclick="confirmBooking()">
+                    <i class="fas fa-check"></i> Confirm & Generate Itinerary
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Generating your personalized itinerary...</p>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/booking-confirmation.js"></script>
+    
+    <style>
+        .budget-status.under-budget .budget-under {
+            color: #10b981;
+            font-weight: 500;
+        }
+        
+        .budget-status.over-budget .budget-over {
+            color: #ef4444;
+            font-weight: 500;
+        }
+        
+        .budget-under i, .budget-over i {
+            margin-right: 0.5rem;
+        }
+        
+        .cost-breakdown-card {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .cost-item.total-cost {
+            font-weight: 600;
+            font-size: 1.1rem;
+            border-bottom: none;
+            border-top: 2px solid #6366f1;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .cost-divider {
+            height: 1px;
+            background: #d1d5db;
+            margin: 1rem 0;
+        }
+        
+        /* Additional Booking Page Styles */
+        .page-header {
+            text-align: center;
+            padding: 2rem 0;
+            color: white;
+        }
+        
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .booking-summary {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+        
+        .summary-section {
+            padding: 2rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .summary-section:last-child {
+            border-bottom: none;
+        }
+        
+        .summary-section h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: #1f2937;
+            font-size: 1.25rem;
+        }
+        
+        .trip-overview-card {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .overview-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        
+        .overview-item .label {
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        .overview-item .value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .selection-card {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 1.5rem;
+            border: 2px solid #e5e7eb;
+        }
+        
+        .selection-details {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .airline-info h3,
+        .hotel-info h3 {
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+        
+        .flight-number {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .route-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .route-time {
+            text-align: center;
+        }
+        
+        .route-time .time {
+            display: block;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+        
+        .route-time .airport {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .route-arrow {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #6b7280;
+        }
+        
+        .duration {
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+        }
+        
+        .price-info {
+            text-align: right;
+        }
+        
+        .price {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #059669;
+        }
+        
+        .per-person,
+        .per-night {
+            display: block;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .hotel-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+        }
+        
+        .amenity-tag {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Progress Indicator Styles */
+        .progress-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 2rem 0 1rem;
+        }
+        
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            position: relative;
+        }
+        
+        .progress-step.completed {
+            background: #10b981;
+        }
+        
+        .progress-step.active {
+            background: #2563eb;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
+        }
+        
+        .progress-line {
+            width: 60px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .progress-line.completed {
+            background: #10b981;
+        }
+        
+        .progress-line.active {
+            background: #2563eb;
+        }
+        
+        .step-labels {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.9rem;
+        }
+        
+        .step-labels .active {
+            color: white;
+            font-weight: 600;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 10px;
+            }
+            
+            .trip-overview-card {
+                grid-template-columns: 1fr;
+            }
+            
+            .route-info {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .route-arrow {
+                transform: rotate(90deg);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .step-labels {
+                gap: 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .progress-line {
+                width: 30px;
+            }
+        }
+    </style>
+    
+    <script>
+        class BookingConfirmation {
+            constructor() {
+                this.sessionManager = window.sessionManager || new SessionManager();
+                this.currencyConverter = window.currencyConverter || new CurrencyConverter();
+                this.progressIndicator = new ProgressIndicator();
+                this.errorHandler = ErrorHandler;
+                
+                this.travelData = this.sessionManager.getTravelData();
+                this.selectedFlight = this.sessionManager.getSelectedFlight();
+                this.selectedHotel = this.sessionManager.getSelectedHotel();
+                
+                this.init();
+            }
+
+            async init() {
+                console.log('=== BOOKING CONFIRMATION DEBUG ===');
+                console.log('SessionManager instance:', this.sessionManager);
+                console.log('Travel Data from session:', this.travelData);
+                console.log('Selected Flight from session:', this.selectedFlight);
+                console.log('Selected Hotel from session:', this.selectedHotel);
+                
+                // Direct check of sessionStorage
+                console.log('Direct sessionStorage check:');
+                console.log('travel_planner_travel_data:', sessionStorage.getItem('travel_planner_travel_data'));
+                console.log('travel_planner_selected_flight:', sessionStorage.getItem('travel_planner_selected_flight'));
+                console.log('travel_planner_selected_hotel:', sessionStorage.getItem('travel_planner_selected_hotel'));
+                
+                // Check what's actually in sessionStorage
+                console.log('Raw sessionStorage contents:');
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    const value = sessionStorage.getItem(key);
+                    console.log(`${key}: ${value}`);
+                }
+                
+                // Validate that we have all required data from the real user flow
+                if (!this.travelData) {
+                    console.log('[REDIRECT] No travel data - redirecting to planning form');
+                    window.location.href = '/';
+                    return;
+                }
+                
+                if (!this.selectedFlight) {
+                    console.log('[REDIRECT] No flight selected - redirecting to flight selection');
+                    window.location.href = '/flight-selection';
+                    return;
+                }
+                
+                if (!this.selectedHotel) {
+                    console.log('[REDIRECT] No hotel selected - redirecting to hotel selection');
+                    window.location.href = '/hotel-selection';
+                    return;
+                }
+
+                // Data is available, now populate the page
+                this.populateSummary();
+                this.calculateCosts();
+            }
+
+            populateSummary() {
+                // Trip Overview
+                document.getElementById('destinationSummary').textContent = this.travelData.destination || 'India';
+                document.getElementById('fromCitySummary').textContent = this.travelData.fromCity || 'Not specified';
+                document.getElementById('durationSummary').textContent = `${this.travelData.duration} days`;
+                document.getElementById('travelersSummary').textContent = `${this.travelData.travelers} ${this.travelData.travelers === 1 ? 'person' : 'people'}`;
+                document.getElementById('themeSummary').textContent = this.travelData.theme;
+                document.getElementById('budgetSummary').textContent = this.currencyConverter.formatCurrency(this.travelData.budget);
+
+                // Flight Summary
+                this.populateFlightSummary();
+                
+                // Hotel Summary
+                this.populateHotelSummary();
+            }
+
+            populateFlightSummary() {
+                const flight = this.selectedFlight;
+                
+                document.getElementById('flightAirline').textContent = flight.airline;
+                document.getElementById('flightNumber').textContent = flight.flight_number || flight.flightNumber;
+                document.getElementById('departureTime').textContent = flight.departure_time || flight.departureTime;
+                document.getElementById('departureAirport').textContent = flight.from;
+                document.getElementById('arrivalTime').textContent = flight.arrival_time || flight.arrivalTime;
+                document.getElementById('arrivalAirport').textContent = flight.to;
+                document.getElementById('flightDuration').textContent = flight.duration;
+                document.getElementById('flightPrice').textContent = this.currencyConverter.formatCurrency(flight.price);
+            }
+
+            populateHotelSummary() {
+                const hotel = this.selectedHotel;
+                
+                console.log('=== HOTEL SUMMARY DEBUG ===');
+                console.log('Hotel object:', hotel);
+                
+                document.getElementById('hotelName').textContent = hotel.name || 'Unknown Hotel';
+                document.getElementById('hotelLocation').textContent = hotel.location || 'Location not specified';
+                document.getElementById('roomType').textContent = hotel.roomType || hotel.room_type || 'Standard Room';
+                document.getElementById('occupancy').textContent = hotel.occupancy || '2 Adults';
+                document.getElementById('hotelPrice').textContent = this.currencyConverter.formatPrice(hotel.price_per_night || hotel.pricePerNight || 0);
+
+                // Hotel Rating
+                this.populateStarRating(hotel.rating);
+                
+                // Hotel Amenities
+                this.populateAmenities(hotel.amenities || []);
+            }
+
+            populateStarRating(rating) {
+                const ratingContainer = document.getElementById('hotelRating');
+                ratingContainer.innerHTML = '';
+                
+                for (let i = 1; i <= 5; i++) {
+                    const star = document.createElement('i');
+                    star.className = i <= rating ? 'fas fa-star' : 'far fa-star';
+                    ratingContainer.appendChild(star);
+                }
+                
+                const ratingText = document.createElement('span');
+                ratingText.textContent = ` ${rating}/5`;
+                ratingContainer.appendChild(ratingText);
+            }
+
+            populateAmenities(amenities) {
+                const amenitiesContainer = document.getElementById('hotelAmenities');
+                amenitiesContainer.innerHTML = '';
+                
+                if (amenities && amenities.length > 0) {
+                    amenities.slice(0, 4).forEach(amenity => {
+                        const amenityTag = document.createElement('span');
+                        amenityTag.className = 'amenity-tag';
+                        amenityTag.textContent = amenity;
+                        amenitiesContainer.appendChild(amenityTag);
+                    });
+                }
+            }
+
+            calculateCosts() {
+                console.log('=== COST CALCULATION DEBUG ===');
+                console.log('Flight price:', this.selectedFlight.price);
+                console.log('Travelers:', this.travelData.travelers);
+                console.log('Hotel price per night:', this.selectedHotel.price_per_night);
+                console.log('Duration:', this.travelData.duration);
+                console.log('Budget:', this.travelData.budget);
+                
+                const flightCost = this.selectedFlight.price * this.travelData.travelers;
+                const hotelCost = (this.selectedHotel.price_per_night || this.selectedHotel.pricePerNight) * this.travelData.duration;
+                const estimatedActivities = Math.round(this.travelData.budget * 0.3); // 30% of budget for activities
+                const totalCost = flightCost + hotelCost + estimatedActivities;
+
+                console.log('Calculated costs:', {
+                    flightCost,
+                    hotelCost,
+                    estimatedActivities,
+                    totalCost
+                });
+
+                document.getElementById('totalFlightCost').textContent = this.currencyConverter.formatPrice(flightCost);
+                document.getElementById('totalHotelCost').textContent = this.currencyConverter.formatPrice(hotelCost);
+                document.getElementById('estimatedActivities').textContent = this.currencyConverter.formatPrice(estimatedActivities);
+                document.getElementById('totalCost').textContent = this.currencyConverter.formatPrice(totalCost);
+                document.getElementById('originalBudget').textContent = this.currencyConverter.formatPrice(this.travelData.budget);
+
+                // Budget Status
+                this.updateBudgetStatus(totalCost);
+            }
+
+            updateBudgetStatus(totalCost) {
+                const budgetStatus = document.getElementById('budgetStatus');
+                const difference = this.travelData.budget - totalCost;
+
+                console.log('Budget status calculation:', {
+                    budget: this.travelData.budget,
+                    totalCost: totalCost,
+                    difference: difference
+                });
+
+                if (difference >= 0) {
+                    budgetStatus.innerHTML = `
+                        <div class="budget-under">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Under budget by ${this.currencyConverter.formatPrice(Math.abs(difference))}</span>
+                        </div>
+                    `;
+                    budgetStatus.className = 'budget-status under-budget';
+                } else {
+                    budgetStatus.innerHTML = `
+                        <div class="budget-over">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Over budget by ${this.currencyConverter.formatPrice(Math.abs(difference))}</span>
+                        </div>
+                    `;
+                    budgetStatus.className = 'budget-status over-budget';
+                }
+            }
+
+            async confirmBooking() {
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                const confirmBtn = document.getElementById('confirmBookingBtn');
+                
+                try {
+                    loadingOverlay.style.display = 'flex';
+                    confirmBtn.disabled = true;
+
+                    // Prepare final travel request with all selections
+                    const finalRequest = {
+                        ...this.travelData,
+                        selectedFlight: this.selectedFlight,
+                        selectedHotel: this.selectedHotel
+                    };
+
+                    // Generate final itinerary with proper error handling
+                    const response = await fetch('http://127.0.0.1:8080/api/generate-itinerary', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(finalRequest)
+                    }).catch(error => {
+                        console.error('Network error:', error);
+                        throw new Error('Server is not running or unreachable');
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to generate itinerary');
+                    }
+
+                    const itinerary = await response.json();
+                    
+                    // Store final itinerary
+                    this.sessionManager.setFinalItinerary(itinerary);
+                    
+                    // Redirect to final itinerary page
+                    window.location.href = '/itinerary';
+                    
+                } catch (error) {
+                    console.error('Error confirming booking:', error);
+                    this.errorHandler.show('Failed to generate itinerary. Please try again.', 'error');
+                    loadingOverlay.style.display = 'none';
+                    confirmBtn.disabled = false;
+                }
+            }
+        }
+
+        function goBack() {
+            window.location.href = '/hotel-selection';
+        }
+
+        function confirmBooking() {
+            if (window.bookingConfirmation) {
+                window.bookingConfirmation.confirmBooking();
+            }
+        }
+
+
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.bookingConfirmation = new BookingConfirmation();
+        });
+    </script>
+</body>
+</html>
