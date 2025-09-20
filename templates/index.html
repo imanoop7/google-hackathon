@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner - Google ADK</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <!-- Google Maps API -->
+    <!-- Google Maps API key required for maps functionality -->
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-plane"></i>
+                <h1>AI Travel Planner</h1>
+                <span class="powered-by">Powered by Google ADK</span>
+            </div>
+            <div class="nav-controls">
+                <div class="language-switcher">
+                    <button id="lang-toggle" class="btn-lang">
+                        <i class="fas fa-globe"></i>
+                        <span id="current-lang">English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Travel Planning Form -->
+        <section id="planning-section" class="section active">
+            <div class="container">
+                <div class="hero-text">
+                    <h2 data-translate="plan_your_dream_trip">Plan Your Dream Trip</h2>
+                    <p data-translate="ai_powered_planning">AI-powered travel planning with Google ADK agents</p>
+                </div>
+
+                <form id="travel-form" class="travel-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="fromCity" data-translate="from_city">From City</label>
+                            <select id="fromCity" name="fromCity" required>
+                                <option value="" data-translate="select_from_city">Select From City</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="destination" data-translate="destination">Destination</label>
+                            <select id="destination" name="destination" required>
+                                <option value="" data-translate="select_destination">Select Destination</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="theme" data-translate="theme">Travel Theme</label>
+                            <select id="theme" name="theme" required>
+                                <option value="" data-translate="select_theme">Select Theme</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="budget" data-translate="budget">Budget (₹)</label>
+                            <input type="number" id="budget" name="budget" placeholder="50000" min="1000" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="startDate" data-translate="start_date">Start Date</label>
+                            <input type="date" id="startDate" name="startDate" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="endDate" data-translate="end_date">End Date</label>
+                            <input type="date" id="endDate" name="endDate" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="travelers" data-translate="travelers">Number of Travelers</label>
+                            <select id="travelers" name="travelers" required>
+                                <option value="" data-translate="select_travelers">Select travelers</option>
+                                <option value="1">1 Person</option>
+                                <option value="2">2 Persons</option>
+                                <option value="3">3 Persons</option>
+                                <option value="4">4 Persons</option>
+                                <option value="5">5 Persons</option>
+                                <option value="6">6 Persons</option>
+                                <option value="7">7 Persons</option>
+                                <option value="8">8 Persons</option>
+                                <option value="9">9 Persons</option>
+                                <option value="10">10 Persons</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="generate-btn" class="btn-primary">
+                        <i class="fas fa-magic"></i>
+                        <span data-translate="generate_itinerary">Generate Itinerary</span>
+                    </button>
+                </form>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p data-translate="generating_itinerary">Generating your perfect itinerary...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Itinerary Display -->
+        <section id="itinerary-section" class="section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 data-translate="your_itinerary">Your Itinerary</h2>
+                    <button id="edit-plan-btn" class="btn-secondary">
+                        <i class="fas fa-edit"></i>
+                        <span data-translate="edit_plan">Edit Plan</span>
+                    </button>
+                </div>
+
+                <!-- Flight Selection Section -->
+                <div id="flight-selection" class="selection-section" style="display:none;">
+                    <h3>🛫 Choose Your Flight</h3>
+                    <div id="flight-options" class="options-grid">
+                        <!-- Flight options will be populated by JavaScript -->
+                    </div>
+                    <button id="confirm-flight" class="btn btn-primary">Confirm Flight Selection</button>
+                </div>
+
+                <!-- Hotel Selection Section -->
+                <div id="hotel-selection" class="selection-section" style="display:none;">
+                    <h3>🏨 Choose Your Accommodation</h3>
+                    <div id="hotel-options" class="options-grid">
+                        <!-- Hotel options will be populated by JavaScript -->
+                    </div>
+                    <button id="confirm-hotel" class="btn btn-primary">Confirm Hotel Selection</button>
+                </div>
+
+                <!-- Booking Confirmation Section -->
+                <div id="booking-confirmation" class="confirmation-section" style="display:none;">
+                    <h3>📋 Confirm Your Booking</h3>
+                    <div class="booking-summary">
+                        <div class="selected-flight">
+                            <h4>✈️ Selected Flight</h4>
+                            <div id="flight-summary"></div>
+                        </div>
+                        <div class="selected-hotel">
+                            <h4>🏨 Selected Hotel</h4>
+                            <div id="hotel-summary"></div>
+                        </div>
+                        <div class="cost-breakdown">
+                            <h4>💰 Cost Breakdown</h4>
+                            <div id="cost-details"></div>
+                        </div>
+                    </div>
+                    <div class="confirmation-actions">
+                        <button id="edit-selections" class="btn btn-secondary">Edit Selections</button>
+                        <button id="confirm-booking" class="btn btn-primary">Generate Itinerary</button>
+                    </div>
+                </div>
+
+                <div id="itinerary-content" class="itinerary-content">
+                    <!-- Interactive Map Section -->
+                    <div id="map-section" class="map-section hidden">
+                        <div class="map-header">
+                            <h3 data-translate="route_map">Route Map</h3>
+                            <div class="map-controls">
+                                <button id="toggle-traffic" class="btn-map">
+                                    <i class="fas fa-road"></i>
+                                    <span data-translate="toggle_traffic">Toggle Traffic</span>
+                                </button>
+                                <button id="optimize-route" class="btn-map">
+                                    <i class="fas fa-route"></i>
+                                    <span data-translate="optimize_route">Optimize Route</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="map" class="map-container"></div>
+                        <div id="directions-panel" class="directions-panel"></div>
+                    </div>
+                    <!-- Itinerary will be populated here -->
+                </div>
+
+                <div class="itinerary-actions">
+                    <button id="book-trip-btn" class="btn-primary">
+                        <i class="fas fa-credit-card"></i>
+                        <span data-translate="book_trip">Book This Trip</span>
+                    </button>
+                    <button id="weather-update-btn" class="btn-secondary">
+                        <i class="fas fa-cloud-sun"></i>
+                        <span data-translate="check_weather">Check Weather Updates</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Booking Section -->
+        <section id="booking-section" class="section">
+            <div class="container">
+                <h2 data-translate="book_your_trip">Book Your Trip</h2>
+                
+                <form id="booking-form" class="booking-form">
+                    <div class="form-section">
+                        <h3 data-translate="personal_info">Personal Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="full-name" data-translate="full_name">Full Name</label>
+                                <input type="text" id="full-name" name="fullName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="email" data-translate="email">Email</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="phone" data-translate="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="travelers" data-translate="travelers">Number of Travelers</label>
+                                <input type="number" id="travelers" name="travelers" min="1" value="1" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 data-translate="payment_info">Payment Information</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="card-number" data-translate="card_number">Card Number</label>
+                                <input type="text" id="card-number" name="cardNumber" placeholder="1234 5678 9012 3456" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="expiry" data-translate="expiry">Expiry Date</label>
+                                <input type="text" id="expiry" name="expiry" placeholder="MM/YY" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv" data-translate="cvv">CVV</label>
+                                <input type="text" id="cvv" name="cvv" placeholder="123" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="card-name" data-translate="cardholder">Cardholder Name</label>
+                                <input type="text" id="card-name" name="cardName" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="booking-summary">
+                        <div class="summary-item">
+                            <span data-translate="total_amount">Total Amount:</span>
+                            <span id="total-amount">₹0</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="confirm-booking-btn" class="btn-primary">
+                        <i class="fas fa-check"></i>
+                        <span data-translate="confirm_booking">Confirm Booking</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <!-- Weather Update Modal -->
+    <div id="weather-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-translate="weather_updates">Weather Updates</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div id="weather-content" class="modal-body">
+                <!-- Weather updates will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 data-translate="booking_confirmed">Booking Confirmed!</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message">
+                    <i class="fas fa-check-circle"></i>
+                    <p data-translate="booking_success">Your trip has been booked successfully!</p>
+                    <div id="booking-details"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 AI Travel Planner. <span data-translate="powered_by_adk">Powered by Google ADK</span></p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/maps.js"></script>
+    <script src="/static/js/real-time-data.js"></script>
+    <script src="/static/js/personalization.js"></script>
+    <script src="/static/js/shareable-itineraries.js"></script>
+    <script src="/static/js/transport-options.js"></script>
+    <script src="/static/js/translations.js"></script>
+</body>
+</html>

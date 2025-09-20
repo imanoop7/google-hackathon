@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner - Select Your Hotel</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-plane"></i>
+                <h1>AI Travel Planner</h1>
+                <span class="powered-by">Powered by Google ADK</span>
+            </div>
+            <div class="nav-controls">
+                <button id="back-btn" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Flights</span>
+                </button>
+                <div class="language-switcher">
+                    <button id="lang-toggle" class="btn-lang">
+                        <i class="fas fa-globe"></i>
+                        <span id="current-lang">English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Progress Indicator -->
+        <div class="container">
+            <div id="progress-container"></div>
+        </div>
+
+        <!-- Hotel Selection Section -->
+        <section class="section active">
+            <div class="container">
+                <div class="section-header">
+                    <h2><i class="fas fa-hotel"></i> Choose Your Accommodation</h2>
+                    <p>Select the perfect place to stay during your trip. All prices are per night in Indian Rupees.</p>
+                </div>
+
+                <!-- Selected Flight Summary -->
+                <div class="selected-flight-summary" id="selected-flight-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Trip Summary -->
+                <div class="trip-summary-card" id="trip-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Hotel Options -->
+                <div class="selection-container">
+                    <div class="selection-header">
+                        <h3><i class="fas fa-filter"></i> Available Hotels</h3>
+                        <div class="filter-controls">
+                            <button class="filter-btn active" data-filter="price">
+                                <i class="fas fa-sort-amount-down"></i>
+                                Sort by Price
+                            </button>
+                            <button class="filter-btn" data-filter="rating">
+                                <i class="fas fa-star"></i>
+                                Sort by Rating
+                            </button>
+                            <button class="filter-btn" data-filter="name">
+                                <i class="fas fa-sort-alpha-down"></i>
+                                Sort by Name
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="hotel-options" class="hotel-options-grid">
+                        <!-- Hotel options will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Selection Actions -->
+                <div class="selection-actions">
+                    <button id="continue-btn" class="btn-primary" disabled>
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Continue to Booking Review</span>
+                    </button>
+                    
+                    <div class="action-note">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Select a hotel to continue to booking confirmation</span>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Finding the best accommodation options for you...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AI Travel Planner. <span>Powered by Google ADK</span></p>
+        </div>
+    </footer>
+
+    <!-- Include common utilities -->
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/translations.js"></script>
+    
+    <script>
+        class HotelSelection {
+            constructor() {
+                this.travelData = null;
+                this.selectedFlight = null;
+                this.hotelOptions = [];
+                this.selectedHotel = null;
+                this.currentSort = 'price';
+                this.init();
+            }
+
+            async init() {
+                console.log('🏨 Initializing Hotel Selection...');
+                
+                // Check if we have travel data and selected flight
+                this.travelData = window.sessionManager.getTravelData();
+                this.selectedFlight = window.sessionManager.getSelectedFlight();
+                
+                if (!this.travelData || !this.selectedFlight) {
+                    window.ErrorHandler.show('Missing travel information. Please start from the beginning.', 'error');
+                    setTimeout(() => window.location.href = '/', 3000);
+                    return;
+                }
+
+                // Render progress indicator
+                const progressContainer = document.getElementById('progress-container');
+                window.progressIndicator.render('hotels', progressContainer);
+                
+                // Display summaries
+                this.displaySelectedFlightSummary();
+                this.displayTripSummary();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Load hotel options
+                await this.loadHotelOptions();
+                
+                console.log('✅ Hotel selection initialized successfully');
+            }
+
+            displaySelectedFlightSummary() {
+                const summaryContainer = document.getElementById('selected-flight-summary');
+                const flight = this.selectedFlight;
+                
+                summaryContainer.innerHTML = `
+                    <div class="selected-flight">
+                        <h3><i class="fas fa-check-circle"></i> Selected Flight</h3>
+                        <div class="flight-info">
+                            <div class="flight-basic">
+                                <span class="airline">${flight.airline} ${flight.flight_number}</span>
+                                <span class="route">${this.travelData.fromCity} → ${this.travelData.destination}</span>
+                                <span class="time">${flight.departure_time} - ${flight.arrival_time}</span>
+                            </div>
+                            <div class="flight-price">
+                                <span class="price">${window.currencyConverter.formatINR(flight.price)}</span>
+                                <span class="note">for ${this.travelData.travelers} ${this.travelData.travelers === 1 ? 'person' : 'people'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            displayTripSummary() {
+                const summaryContainer = document.getElementById('trip-summary');
+                const { destination, startDate, endDate, travelers, budget, theme } = this.travelData;
+                
+                const duration = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+                const remainingBudget = budget - this.selectedFlight.price;
+                
+                summaryContainer.innerHTML = `
+                    <div class="trip-summary">
+                        <h3><i class="fas fa-map-marked-alt"></i> Accommodation Details</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="label">Destination:</span>
+                                <span class="value">${destination}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Check-in:</span>
+                                <span class="value">${new Date(startDate).toLocaleDateString('en-IN')}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Check-out:</span>
+                                <span class="value">${new Date(endDate).toLocaleDateString('en-IN')}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Nights:</span>
+                                <span class="value">${duration} nights</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Guests:</span>
+                                <span class="value">${travelers} ${travelers === 1 ? 'guest' : 'guests'}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Remaining Budget:</span>
+                                <span class="value">${window.currencyConverter.formatINR(remainingBudget)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            setupEventListeners() {
+                // Back button
+                const backBtn = document.getElementById('back-btn');
+                if (backBtn) {
+                    backBtn.addEventListener('click', () => {
+                        window.location.href = '/flight-selection';
+                    });
+                }
+
+                // Continue button
+                const continueBtn = document.getElementById('continue-btn');
+                if (continueBtn) {
+                    continueBtn.addEventListener('click', () => this.handleContinue());
+                }
+
+                // Filter buttons
+                const filterBtns = document.querySelectorAll('.filter-btn');
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const filter = e.currentTarget.dataset.filter;
+                        this.sortHotels(filter);
+                        
+                        // Update active filter button
+                        filterBtns.forEach(b => b.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                    });
+                });
+
+                // Language toggle
+                const langToggle = document.getElementById('lang-toggle');
+                if (langToggle) {
+                    langToggle.addEventListener('click', () => this.toggleLanguage());
+                }
+            }
+
+            async loadHotelOptions() {
+                const { destination, startDate, endDate, travelers, theme } = this.travelData;
+                
+                try {
+                    const response = await window.apiHelper.post('/api/get-accommodation-options', {
+                        city: destination,
+                        checkin_date: startDate,
+                        checkout_date: endDate,
+                        travelers: travelers,
+                        budget_range: this.travelData.hotelBudget || 'mid-range'
+                    });
+
+                    if (response.status === "success" && response.accommodations && response.accommodations.length > 0) {
+                        this.hotelOptions = response.accommodations.map(hotel => {
+                            console.log(`[DEBUG] Hotel ${hotel.name}: Price = ${hotel.price_per_night} ${hotel.currency}`);
+                            return {
+                                ...hotel,
+                                price_per_night: Math.round(hotel.price_per_night), // Keep original price, just round it
+                                id: `hotel_${Math.random().toString(36).substr(2, 9)}`
+                            };
+                        });
+                    } else if (response.status === "error") {
+                        throw new Error(response.error_message || 'Hotel service error');
+                    } else {
+                        throw new Error('No hotel data received from API');
+                    }
+
+                    this.displayHotelOptions();
+                    this.hideLoading();
+
+                } catch (error) {
+                    console.error('❌ Error loading hotels:', error);
+                    this.showError('Unable to load hotel options. Please check your connection and try again.');
+                    this.hideLoading();
+                }
+            }
+
+            showError(message) {
+                const container = document.getElementById('hotel-options');
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Unable to Load Hotels</h3>
+                        <p>${message}</p>
+                        <button onclick="window.location.reload()" class="btn btn-primary">
+                            Try Again
+                        </button>
+                        <button onclick="window.location.href='/flight-selection'" class="btn btn-secondary">
+                            Back to Flights
+                        </button>
+                    </div>
+                `;
+            }
+
+            getRoomTypeForTravelers(travelers) {
+                if (travelers === 1) return 'Single Room';
+                if (travelers === 2) return 'Double Room';
+                if (travelers <= 4) return 'Family Room / Connecting Rooms';
+                return 'Multiple Rooms / Suite';
+            }
+
+            displayHotelOptions() {
+                const container = document.getElementById('hotel-options');
+                const duration = Math.ceil((new Date(this.travelData.endDate) - new Date(this.travelData.startDate)) / (1000 * 60 * 60 * 24));
+                
+                if (!this.hotelOptions.length) {
+                    container.innerHTML = `
+                        <div class="no-options">
+                            <i class="fas fa-hotel"></i>
+                            <h3>No hotels found</h3>
+                            <p>We couldn't find any accommodations for your selected dates. Please try different dates or contact support.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.hotelOptions.map(hotel => {
+                    const totalPrice = hotel.price_per_night * duration;
+                    const remainingBudget = this.travelData.budget - this.selectedFlight.price;
+                    const isAffordable = totalPrice <= remainingBudget;
+                    
+                    return `
+                        <div class="hotel-card ${!isAffordable ? 'over-budget' : ''}" data-hotel-id="${hotel.id}">
+                            <div class="hotel-header">
+                                <div class="hotel-info">
+                                    <div class="hotel-name">${hotel.name}</div>
+                                    <div class="hotel-rating">
+                                        ${Array.from({length: 5}, (_, i) => 
+                                            `<i class="fas fa-star ${i < hotel.rating ? 'filled' : ''}"></i>`
+                                        ).join('')}
+                                        <span class="rating-text">${hotel.rating} stars</span>
+                                    </div>
+                                    <div class="hotel-location">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        ${hotel.location}
+                                    </div>
+                                    ${hotel.distance ? `
+                                        <div class="hotel-distance">
+                                            <i class="fas fa-route"></i>
+                                            ${hotel.distance}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                <div class="hotel-pricing">
+                                    <div class="price-per-night">${window.currencyConverter.formatINR(hotel.price_per_night)}</div>
+                                    <div class="price-unit">per night</div>
+                                    <div class="total-price">
+                                        <strong>Total: ${window.currencyConverter.formatINR(totalPrice)}</strong>
+                                        <div class="duration-note">for ${duration} nights</div>
+                                    </div>
+                                    ${!isAffordable ? `
+                                        <div class="budget-warning">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            Over budget
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                            
+                            <div class="hotel-details">
+                                <div class="room-info">
+                                    <h4><i class="fas fa-bed"></i> ${hotel.room_type}</h4>
+                                    <p>Perfect for ${this.travelData.travelers} ${this.travelData.travelers === 1 ? 'guest' : 'guests'}</p>
+                                </div>
+                                
+                                <div class="hotel-amenities">
+                                    <h4><i class="fas fa-concierge-bell"></i> Amenities</h4>
+                                    <div class="amenities-list">
+                                        ${hotel.amenities.map(amenity => `
+                                            <span class="amenity-tag">
+                                                <i class="fas fa-check"></i>
+                                                ${amenity}
+                                            </span>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                
+                                <div class="hotel-policies">
+                                    ${hotel.breakfast ? `
+                                        <div class="policy-item breakfast">
+                                            <i class="fas fa-coffee"></i>
+                                            <span>${hotel.breakfast}</span>
+                                        </div>
+                                    ` : ''}
+                                    <div class="policy-item cancellation">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>${hotel.cancellation}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="hotel-actions">
+                                <input type="radio" name="selected-hotel" value="${hotel.id}" id="hotel-${hotel.id}" ${!isAffordable ? 'disabled' : ''}>
+                                <label for="hotel-${hotel.id}" class="select-hotel-btn ${!isAffordable ? 'disabled' : ''}">
+                                    <i class="fas fa-check"></i>
+                                    ${isAffordable ? 'Select This Hotel' : 'Over Budget'}
+                                </label>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Add event listeners for hotel selection
+                const radioButtons = container.querySelectorAll('input[name="selected-hotel"]:not([disabled])');
+                radioButtons.forEach(radio => {
+                    radio.addEventListener('change', (e) => this.handleHotelSelection(e.target.value));
+                });
+            }
+
+            sortHotels(criteria) {
+                this.currentSort = criteria;
+                
+                switch (criteria) {
+                    case 'price':
+                        this.hotelOptions.sort((a, b) => a.price_per_night - b.price_per_night);
+                        break;
+                    case 'rating':
+                        this.hotelOptions.sort((a, b) => b.rating - a.rating);
+                        break;
+                    case 'name':
+                        this.hotelOptions.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                }
+                
+                this.displayHotelOptions();
+            }
+
+            handleHotelSelection(hotelId) {
+                this.selectedHotel = this.hotelOptions.find(hotel => hotel.id === hotelId);
+                
+                if (this.selectedHotel) {
+                    console.log('🏨 Hotel selected:', this.selectedHotel);
+                    
+                    // Enable continue button
+                    const continueBtn = document.getElementById('continue-btn');
+                    continueBtn.disabled = false;
+                    
+                    // Visual feedback
+                    const hotelCards = document.querySelectorAll('.hotel-card');
+                    hotelCards.forEach(card => card.classList.remove('selected'));
+                    
+                    const selectedCard = document.querySelector(`[data-hotel-id="${hotelId}"]`);
+                    if (selectedCard) {
+                        selectedCard.classList.add('selected');
+                    }
+                    
+                    // Update action note
+                    const actionNote = document.querySelector('.action-note span');
+                    if (actionNote) {
+                        const duration = Math.ceil((new Date(this.travelData.endDate) - new Date(this.travelData.startDate)) / (1000 * 60 * 60 * 24));
+                        const totalPrice = this.selectedHotel.price_per_night * duration;
+                        actionNote.textContent = `${this.selectedHotel.name} selected - ${window.currencyConverter.formatINR(totalPrice)} total`;
+                    }
+                }
+            }
+
+            handleContinue() {
+                if (!this.selectedHotel) {
+                    window.ErrorHandler.show('Please select a hotel to continue.', 'error');
+                    return;
+                }
+
+                console.log('=== HOTEL SELECTION DEBUG ===');
+                console.log('Selected hotel data:', this.selectedHotel);
+
+                // Save selected hotel to session
+                window.sessionManager.setSelectedHotel(this.selectedHotel);
+                
+                // Verify it was saved
+                const savedHotel = window.sessionManager.getSelectedHotel();
+                console.log('Hotel data after saving:', savedHotel);
+                
+                // Show success message and redirect
+                window.ErrorHandler.success('Hotel selected successfully!');
+                setTimeout(() => {
+                    window.location.href = '/booking-confirmation';
+                }, 1000);
+            }
+
+            hideLoading() {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }
+
+            async toggleLanguage() {
+                // Language toggle functionality
+                console.log('Language toggle clicked');
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.hotelSelection = new HotelSelection();
+        });
+    </script>
+
+    <style>
+        .selected-flight-summary {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .selected-flight h3 {
+            color: var(--success-color);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flight-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .flight-basic {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .flight-basic .airline {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .flight-basic .route {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+
+        .flight-basic .time {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+
+        .flight-price {
+            text-align: right;
+        }
+
+        .flight-price .price {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--success-color);
+        }
+
+        .flight-price .note {
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .hotel-options-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .hotel-card {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .hotel-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .hotel-card.selected {
+            border-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .hotel-card.over-budget {
+            border-color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .hotel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+        }
+
+        .hotel-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .hotel-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .hotel-rating .fas.fa-star.filled {
+            color: var(--warning-color);
+        }
+
+        .hotel-rating .fas.fa-star {
+            color: var(--border-color);
+        }
+
+        .rating-text {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .hotel-location, .hotel-distance {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .hotel-pricing {
+            text-align: right;
+        }
+
+        .price-per-night {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .price-unit {
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .total-price {
+            padding: 0.5rem;
+            background: var(--light-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+        }
+
+        .duration-note {
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .budget-warning {
+            color: var(--danger-color);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hotel-details {
+            margin-bottom: 1.5rem;
+        }
+
+        .hotel-details h4 {
+            color: var(--text-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .room-info {
+            margin-bottom: 1rem;
+        }
+
+        .room-info p {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+
+        .amenities-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .amenity-tag {
+            background: var(--light-color);
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--border-radius);
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .amenity-tag i {
+            color: var(--success-color);
+        }
+
+        .hotel-policies {
+            border-top: 1px solid var(--border-color);
+            padding-top: 1rem;
+        }
+
+        .policy-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .policy-item.breakfast i {
+            color: var(--warning-color);
+        }
+
+        .policy-item.cancellation i {
+            color: var(--primary-color);
+        }
+
+        .hotel-actions {
+            text-align: center;
+        }
+
+        .hotel-actions input[type="radio"] {
+            display: none;
+        }
+
+        .select-hotel-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .select-hotel-btn:hover:not(.disabled) {
+            background: var(--primary-dark);
+        }
+
+        .select-hotel-btn.disabled {
+            background: var(--secondary-color);
+            cursor: not-allowed;
+        }
+
+        .hotel-actions input[type="radio"]:checked + .select-hotel-btn {
+            background: var(--success-color);
+        }
+
+        @media (max-width: 768px) {
+            .hotel-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .hotel-pricing {
+                text-align: left;
+            }
+            
+            .flight-info {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .flight-price {
+                text-align: left;
+            }
+        }
+    </style>
+</body>
+</html>

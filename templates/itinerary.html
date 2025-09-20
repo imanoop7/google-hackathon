@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="w            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="button" class="btn btn-success" onclick="bookTrip()">
+                    <i class="fas fa-credit-card"></i> Book This Trip
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="downloadItinerary()">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="shareItinerary()">
+                    <i class="fas fa-share"></i> Share Itinerary
+                </button>
+                <button type="button" class="btn btn-primary" onclick="planNewTrip()">
+                    <i class="fas fa-plus"></i> Plan New Trip
+                </button>
+            </div>width, initial-scale=1.0">
+    <title>Your Itinerary - Travel Planner</title>
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <h1><i class="fas fa-map-marked-alt"></i> Your Complete Itinerary</h1>
+            <p>Your personalized travel plan is ready!</p>
+        </header>
+
+        <!-- Progress Indicator -->
+        <div class="progress-container">
+            <div class="progress-step completed">1</div>
+            <div class="progress-line completed"></div>
+            <div class="progress-step completed">2</div>
+            <div class="progress-line completed"></div>
+            <div class="progress-step completed">3</div>
+            <div class="progress-line completed"></div>
+            <div class="progress-step completed">4</div>
+            <div class="progress-line completed"></div>
+            <div class="progress-step completed">5</div>
+        </div>
+
+        <div class="step-labels">
+            <span>Planning</span>
+            <span>Flights</span>
+            <span>Hotels</span>
+            <span>Confirmation</span>
+            <span class="active">Itinerary</span>
+        </div>
+
+        <div class="itinerary-container">
+            <!-- Trip Summary -->
+            <div class="trip-summary-header">
+                <div class="trip-title">
+                    <h2 id="tripTitle">Your Adventure Awaits</h2>
+                    <p id="tripSubtitle">Discover amazing experiences in your destination</p>
+                </div>
+                <div class="trip-quick-info">
+                    <div class="quick-info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span id="tripDates">-</span>
+                    </div>
+                    <div class="quick-info-item">
+                        <i class="fas fa-users"></i>
+                        <span id="tripTravelers">-</span>
+                    </div>
+                    <div class="quick-info-item">
+                        <i class="fas fa-wallet"></i>
+                        <span id="totalBudget">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transportation & Accommodation Summary -->
+            <div class="booking-summary-compact">
+                <div class="booking-item">
+                    <div class="booking-icon">
+                        <i class="fas fa-plane"></i>
+                    </div>
+                    <div class="booking-details">
+                        <h4 id="compactFlightInfo">Flight Details</h4>
+                        <p id="compactFlightDetails">-</p>
+                    </div>
+                </div>
+                <div class="booking-item">
+                    <div class="booking-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div class="booking-details">
+                        <h4 id="compactHotelInfo">Hotel Details</h4>
+                        <p id="compactHotelDetails">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Daily Itinerary -->
+            <div class="daily-itinerary">
+                <h3><i class="fas fa-calendar-week"></i> Daily Itinerary</h3>
+                <div id="dailySchedule">
+                    <!-- Daily schedules will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Additional Recommendations -->
+            <div class="recommendations-section">
+                <h3><i class="fas fa-lightbulb"></i> Additional Recommendations</h3>
+                <div class="recommendations-grid" id="recommendationsGrid">
+                    <!-- Recommendations will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Important Information -->
+            <div class="important-info">
+                <h3><i class="fas fa-info-circle"></i> Important Information</h3>
+                <div id="importantInfo">
+                    <!-- Important information will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="itinerary-actions">
+                <button type="button" class="btn btn-secondary" onclick="downloadItinerary()">
+                    <i class="fas fa-download"></i> Download PDF
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="shareItinerary()">
+                    <i class="fas fa-share-alt"></i> Share Itinerary
+                </button>
+                <button type="button" class="btn btn-primary" onclick="planNewTrip()">
+                    <i class="fas fa-plus"></i> Plan New Trip
+                </button>
+            </div>
+        </div>
+
+        <!-- Share Modal -->
+        <div class="modal" id="shareModal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Share Your Itinerary</h3>
+                    <button class="close-btn" onclick="closeShareModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Share your itinerary with friends and family:</p>
+                    <div class="share-options">
+                        <button class="share-btn" onclick="shareViaEmail()">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                        <button class="share-btn" onclick="shareViaWhatsApp()">
+                            <i class="fab fa-whatsapp"></i> WhatsApp
+                        </button>
+                        <button class="share-btn" onclick="copyLink()">
+                            <i class="fas fa-link"></i> Copy Link
+                        </button>
+                    </div>
+                    <div class="share-link-container">
+                        <input type="text" id="shareLink" readonly class="share-link-input">
+                        <button class="copy-link-btn" onclick="copyLink()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Preparing your itinerary...</p>
+        </div>
+    </div>
+
+    <script src="/static/js/common.js"></script>
+    <script>
+        class FinalItinerary {
+            constructor() {
+                this.sessionManager = window.sessionManager;
+                this.currencyConverter = new CurrencyConverter();
+                this.progressIndicator = new ProgressIndicator();
+                this.errorHandler = ErrorHandler;
+                
+                this.travelData = this.sessionManager.getTravelData();
+                this.selectedFlight = this.sessionManager.getSelectedFlight();
+                this.selectedHotel = this.sessionManager.getSelectedHotel();
+                this.finalItinerary = this.sessionManager.getFinalItinerary();
+                
+                this.init();
+            }
+
+            init() {
+                if (!this.travelData || !this.selectedFlight || !this.selectedHotel) {
+                    this.errorHandler.show('Missing travel information. Redirecting to start...', 'error');
+                    setTimeout(() => window.location.href = '/', 2000);
+                    return;
+                }
+
+                // Progress indicator step 5 (final step)
+                this.populateItinerary();
+                this.generateShareLink();
+            }
+
+            populateItinerary() {
+                // Trip Summary
+                this.populateTripSummary();
+                
+                // Compact Booking Summary
+                this.populateCompactBookingSummary();
+                
+                // Daily Itinerary
+                this.populateDailyItinerary();
+                
+                // Recommendations
+                this.populateRecommendations();
+                
+                // Important Information
+                this.populateImportantInfo();
+            }
+
+            populateTripSummary() {
+                const destination = this.travelData.destination || 'India';
+                const theme = this.travelData.theme;
+                
+                document.getElementById('tripTitle').textContent = `${theme} Adventure in ${destination}`;
+                document.getElementById('tripSubtitle').textContent = `${this.travelData.duration} days of amazing experiences`;
+                
+                // Trip dates (if available)
+                if (this.travelData.startDate && this.travelData.endDate) {
+                    document.getElementById('tripDates').textContent = `${this.travelData.startDate} - ${this.travelData.endDate}`;
+                } else {
+                    document.getElementById('tripDates').textContent = `${this.travelData.duration} days`;
+                }
+                
+                document.getElementById('tripTravelers').textContent = `${this.travelData.travelers} ${this.travelData.travelers === 1 ? 'Traveler' : 'Travelers'}`;
+                document.getElementById('totalBudget').textContent = this.currencyConverter.formatCurrency(this.travelData.budget);
+            }
+
+            populateCompactBookingSummary() {
+                // Flight summary
+                document.getElementById('compactFlightInfo').textContent = `${this.selectedFlight.airline} ${this.selectedFlight.flightNumber}`;
+                document.getElementById('compactFlightDetails').textContent = `${this.selectedFlight.from} → ${this.selectedFlight.to} • ${this.selectedFlight.departureTime} - ${this.selectedFlight.arrivalTime}`;
+                
+                // Hotel summary
+                document.getElementById('compactHotelInfo').textContent = this.selectedHotel.name;
+                document.getElementById('compactHotelDetails').textContent = `${this.selectedHotel.location} • ${this.selectedHotel.roomType} • ${this.travelData.duration} nights`;
+            }
+
+            populateDailyItinerary() {
+                const dailySchedule = document.getElementById('dailySchedule');
+                
+                // Use real API-generated itinerary only
+                if (this.finalItinerary && this.finalItinerary.itinerary) {
+                    this.renderRealItinerary(this.finalItinerary.itinerary);
+                } else {
+                    // Show error - no dummy data
+                    this.showError('No itinerary data available. Please start over from the planning page.');
+                }
+            }
+
+            renderAIDailyPlans(dailyPlans) {
+                const dailySchedule = document.getElementById('dailySchedule');
+                dailySchedule.innerHTML = '';
+                
+                dailyPlans.forEach((day, index) => {
+                    const dayCard = this.createDayCard(index + 1, day);
+                    dailySchedule.appendChild(dayCard);
+                });
+            }
+
+            renderRealItinerary(itineraryText) {
+                const dailySchedule = document.getElementById('dailySchedule');
+                dailySchedule.innerHTML = '';
+                
+                // Parse the real AI-generated itinerary
+                const formattedContent = document.createElement('div');
+                formattedContent.className = 'real-itinerary-content';
+                formattedContent.innerHTML = `
+                    <div class="ai-generated-plan">
+                        <h3><i class="fas fa-robot"></i> AI-Generated Travel Plan</h3>
+                        <div class="itinerary-text">
+                            ${this.formatItineraryText(itineraryText)}
+                        </div>
+                    </div>
+                `;
+                
+                dailySchedule.appendChild(formattedContent);
+            }
+            
+            formatItineraryText(text) {
+                if (!text) return "No itinerary available.";
+                
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/Day \d+:/gi, '<h4 class="day-header">$&</h4>');
+            }
+            
+            showError(message) {
+                const dailySchedule = document.getElementById('dailySchedule');
+                dailySchedule.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>${message}</p>
+                        <button onclick="window.location.href='/'" class="btn btn-primary">
+                            Start Over
+                        </button>
+                    </div>
+                `;
+            }
+
+            createDayCard(dayNumber, dayData) {
+                const dayCard = document.createElement('div');
+                dayCard.className = 'day-card';
+                
+                dayCard.innerHTML = `
+                    <div class="day-header">
+                        <h4><i class="fas fa-calendar-day"></i> ${dayData.title || `Day ${dayNumber}`}</h4>
+                    </div>
+                    <div class="day-activities">
+                        ${dayData.activities.map(activity => `
+                            <div class="activity-item">
+                                <div class="activity-time">${activity.time}</div>
+                                <div class="activity-details">
+                                    <h5>${activity.activity}</h5>
+                                    <p><i class="fas fa-map-marker-alt"></i> ${activity.location}</p>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                return dayCard;
+            }
+
+            populateRecommendations() {
+                const recommendationsGrid = document.getElementById('recommendationsGrid');
+                
+                const recommendations = [
+                    {
+                        icon: 'fas fa-utensils',
+                        title: 'Local Cuisine',
+                        description: 'Try authentic local dishes and street food',
+                        tip: 'Ask locals for their favorite food spots'
+                    },
+                    {
+                        icon: 'fas fa-shopping-bag',
+                        title: 'Shopping',
+                        description: 'Explore local markets and artisan shops',
+                        tip: 'Bargain politely and carry cash'
+                    },
+                    {
+                        icon: 'fas fa-camera',
+                        title: 'Photography',
+                        description: 'Capture memories at scenic locations',
+                        tip: 'Best light is during golden hour'
+                    },
+                    {
+                        icon: 'fas fa-heart',
+                        title: 'Local Culture',
+                        description: 'Engage with local customs and traditions',
+                        tip: 'Be respectful and open-minded'
+                    }
+                ];
+                
+                recommendationsGrid.innerHTML = recommendations.map(rec => `
+                    <div class="recommendation-card">
+                        <div class="recommendation-icon">
+                            <i class="${rec.icon}"></i>
+                        </div>
+                        <h4>${rec.title}</h4>
+                        <p>${rec.description}</p>
+                        <div class="recommendation-tip">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>${rec.tip}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            populateImportantInfo() {
+                const importantInfo = document.getElementById('importantInfo');
+                
+                const infoItems = [
+                    {
+                        icon: 'fas fa-id-card',
+                        title: 'Documents',
+                        content: 'Carry valid ID, tickets, and hotel confirmations'
+                    },
+                    {
+                        icon: 'fas fa-phone',
+                        title: 'Emergency Contacts', 
+                        content: 'Keep local emergency numbers and embassy contacts handy'
+                    },
+                    {
+                        icon: 'fas fa-medkit',
+                        title: 'Health & Safety',
+                        content: 'Pack essential medicines and travel insurance documents'
+                    },
+                    {
+                        icon: 'fas fa-money-bill-wave',
+                        title: 'Currency',
+                        content: 'Carry some local currency and inform bank about travel'
+                    }
+                ];
+                
+                importantInfo.innerHTML = infoItems.map(item => `
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="${item.icon}"></i>
+                        </div>
+                        <div class="info-content">
+                            <h4>${item.title}</h4>
+                            <p>${item.content}</p>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            generateShareLink() {
+                // Generate a shareable link (in a real app, this would be a unique URL)
+                const shareLink = `${window.location.origin}/shared-itinerary/${Date.now()}`;
+                document.getElementById('shareLink').value = shareLink;
+            }
+        }
+
+        // Action Functions
+        function downloadItinerary() {
+            // In a real implementation, this would generate a PDF
+            alert('PDF download feature will be implemented with a PDF generation library');
+        }
+
+        function shareItinerary() {
+            document.getElementById('shareModal').style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').style.display = 'none';
+        }
+
+        function shareViaEmail() {
+            const shareLink = document.getElementById('shareLink').value;
+            const subject = encodeURIComponent('Check out my travel itinerary!');
+            const body = encodeURIComponent(`Hi! I wanted to share my travel itinerary with you. Check it out here: ${shareLink}`);
+            window.open(`mailto:?subject=${subject}&body=${body}`);
+        }
+
+        function shareViaWhatsApp() {
+            const shareLink = document.getElementById('shareLink').value;
+            const message = encodeURIComponent(`Check out my travel itinerary: ${shareLink}`);
+            window.open(`https://wa.me/?text=${message}`);
+        }
+
+        function copyLink() {
+            const shareLink = document.getElementById('shareLink');
+            shareLink.select();
+            shareLink.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(shareLink.value).then(() => {
+                alert('Link copied to clipboard!');
+            });
+        }
+
+        function bookTrip() {
+            // Redirect to passenger details collection page
+            window.location.href = '/passenger-details';
+        }
+
+        function planNewTrip() {
+            // Clear session data and redirect to start
+            if (window.finalItinerary && window.finalItinerary.sessionManager) {
+                window.finalItinerary.sessionManager.clearAllData();
+            }
+            window.location.href = '/';
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            window.finalItinerary = new FinalItinerary();
+        });
+    </script>
+</body>
+</html>

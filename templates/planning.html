@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner - Plan Your Dream Trip</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-plane"></i>
+                <h1>AI Travel Planner</h1>
+                <span class="powered-by">Powered by Google ADK</span>
+            </div>
+            <div class="nav-controls">
+                <div class="language-switcher">
+                    <button id="lang-toggle" class="btn-lang">
+                        <i class="fas fa-globe"></i>
+                        <span id="current-lang">English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Progress Indicator -->
+        <div class="container">
+            <div id="progress-container"></div>
+        </div>
+
+        <!-- Travel Planning Form -->
+        <section class="section active">
+            <div class="container">
+                <div class="hero-text">
+                    <h2 data-translate="plan_your_dream_trip">Plan Your Dream Trip</h2>
+                    <p data-translate="ai_powered_planning">AI-powered travel planning with real-time data from multiple sources</p>
+                </div>
+
+                <form id="travel-form" class="travel-form">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="fromCity" data-translate="from_city">From City</label>
+                            <select id="fromCity" name="fromCity" required>
+                                <option value="" data-translate="select_from_city">Select From City</option>
+                            </select>
+                            <div class="form-help">Where will you start your journey?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="destination" data-translate="destination">Destination</label>
+                            <select id="destination" name="destination" required>
+                                <option value="" data-translate="select_destination">Select Destination</option>
+                            </select>
+                            <div class="form-help">Where would you like to go?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="theme" data-translate="theme">Travel Theme</label>
+                            <select id="theme" name="theme" required>
+                                <option value="" data-translate="select_theme">Select Theme</option>
+                            </select>
+                            <div class="form-help">What type of experience are you looking for?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="budget" data-translate="budget">Budget (₹)</label>
+                            <input type="number" id="budget" name="budget" placeholder="50000" min="1000" required>
+                            <div class="form-help">Total budget for all travelers in Indian Rupees</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="startDate" data-translate="start_date">Start Date</label>
+                            <input type="date" id="startDate" name="startDate" required>
+                            <div class="form-help">When do you want to start your trip? (Minimum 1 day advance booking required for flights)</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="endDate" data-translate="end_date">End Date</label>
+                            <input type="date" id="endDate" name="endDate" required>
+                            <div class="form-help">When do you want to return?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="travelers" data-translate="travelers">Number of Travelers</label>
+                            <select id="travelers" name="travelers" required>
+                                <option value="" data-translate="select_travelers">Select travelers</option>
+                                <option value="1">1 Person (Solo Travel)</option>
+                                <option value="2">2 Persons (Couple/Friends)</option>
+                                <option value="3">3 Persons (Small Group)</option>
+                                <option value="4">4 Persons (Small Group)</option>
+                                <option value="5">5 Persons (Large Group)</option>
+                                <option value="6">6 Persons (Large Group)</option>
+                                <option value="7">7 Persons (Large Group)</option>
+                                <option value="8">8 Persons (Large Group)</option>
+                                <option value="9">9 Persons (Large Group)</option>
+                                <option value="10">10 Persons (Large Group)</option>
+                            </select>
+                            <div class="form-help">How many people will be traveling?</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="hotelBudget" data-translate="hotel_budget">Hotel Budget Preference</label>
+                            <select id="hotelBudget" name="hotelBudget" required>
+                                <option value="" data-translate="select_budget">Select Budget Range</option>
+                                <option value="budget">Budget (₹1,000 - ₹3,000 per night)</option>
+                                <option value="mid-range">Mid-Range (₹3,000 - ₹8,000 per night)</option>
+                                <option value="luxury">Luxury (₹8,000+ per night)</option>
+                            </select>
+                            <div class="form-help">Choose your preferred accommodation budget range</div>
+                        </div>
+                    </div>
+
+                    <div class="form-summary" id="form-summary" style="display: none;">
+                        <h3><i class="fas fa-clipboard-list"></i> Trip Summary</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="label">Route:</span>
+                                <span class="value" id="summary-route">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Duration:</span>
+                                <span class="value" id="summary-duration">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Travelers:</span>
+                                <span class="value" id="summary-travelers">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Budget:</span>
+                                <span class="value" id="summary-budget">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Theme:</span>
+                                <span class="value" id="summary-theme">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Hotel Budget:</span>
+                                <span class="value" id="summary-hotel-budget">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="start-planning-btn" class="btn-primary">
+                        <i class="fas fa-plane-departure"></i>
+                        <span data-translate="start_planning">Start Planning My Trip</span>
+                    </button>
+                </form>
+
+                <div id="loading" class="loading hidden">
+                    <div class="spinner"></div>
+                    <p data-translate="preparing_options">Preparing your travel options...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AI Travel Planner. <span data-translate="powered_by_adk">Powered by Google ADK</span></p>
+        </div>
+    </footer>
+
+    <!-- Include common utilities -->
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/translations.js"></script>
+    
+    <script>
+        class TravelPlanningForm {
+            constructor() {
+                this.currentLanguage = 'english';
+                this.destinations = [];
+                this.themes = [];
+                this.init();
+            }
+
+            async init() {
+                console.log('🚀 Initializing Travel Planning Form...');
+                
+                // Render progress indicator
+                const progressContainer = document.getElementById('progress-container');
+                window.progressIndicator.render('planning', progressContainer);
+                
+                // Load options
+                await this.loadOptions();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Initialize translations
+                if (window.translations) {
+                    window.translations.init();
+                }
+                
+                console.log('✅ Form initialized successfully');
+            }
+
+            async loadOptions() {
+                try {
+                    // Load destinations
+                    const destResponse = await window.apiHelper.get('/api/destinations');
+                    this.destinations = destResponse.destinations || [];
+
+                    // Load themes
+                    const themesResponse = await window.apiHelper.get('/api/themes');
+                    this.themes = themesResponse.themes || [];
+
+                    // Populate dropdowns
+                    this.populateFromCities();
+                    this.populateDestinations();
+                    this.populateThemes();
+                    
+                } catch (error) {
+                    console.error('❌ Error loading options:', error);
+                    this.showOptionsError('Unable to load destinations and themes. Please check your connection and try again.');
+                }
+            }
+
+            showOptionsError(message) {
+                const formContainer = document.querySelector('.travel-form');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'api-error';
+                errorDiv.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Unable to Load Options</h3>
+                        <p>${message}</p>
+                        <button onclick="window.location.reload()" class="btn btn-primary">
+                            Retry
+                        </button>
+                    </div>
+                `;
+                formContainer.insertBefore(errorDiv, formContainer.firstChild);
+            }
+
+            populateFromCities() {
+                const select = document.getElementById('fromCity');
+                if (!select) return;
+
+                // Clear existing options except the first one
+                select.innerHTML = '<option value="" data-translate="select_from_city">Select From City</option>';
+                
+                // Use the same destinations array for from cities
+                this.destinations.forEach(dest => {
+                    const option = document.createElement('option');
+                    option.value = dest.name;
+                    option.textContent = dest.name;
+                    select.appendChild(option);
+                });
+            }
+
+            populateDestinations() {
+                const select = document.getElementById('destination');
+                if (!select) return;
+
+                // Clear existing options except the first one
+                select.innerHTML = '<option value="" data-translate="select_destination">Select Destination</option>';
+                
+                this.destinations.forEach(dest => {
+                    const option = document.createElement('option');
+                    option.value = dest.name;
+                    option.textContent = `${dest.name} - ${dest.description}`;
+                    select.appendChild(option);
+                });
+            }
+
+            populateThemes() {
+                const select = document.getElementById('theme');
+                if (!select) return;
+
+                // Clear existing options except the first one
+                select.innerHTML = '<option value="" data-translate="select_theme">Select Theme</option>';
+                
+                this.themes.forEach(theme => {
+                    const option = document.createElement('option');
+                    option.value = theme.name;
+                    option.textContent = `${theme.name.charAt(0).toUpperCase() + theme.name.slice(1)} - ${theme.description}`;
+                    select.appendChild(option);
+                });
+            }
+
+            setupEventListeners() {
+                console.log('🔧 Setting up event listeners...');
+                
+                // Travel form submission
+                const travelForm = document.getElementById('travel-form');
+                if (travelForm) {
+                    travelForm.addEventListener('submit', (e) => this.handleFormSubmit(e));
+                    console.log('✅ Travel form listener attached');
+                }
+
+                // Form field changes for live summary
+                const formFields = ['fromCity', 'destination', 'theme', 'budget', 'startDate', 'endDate', 'travelers'];
+                formFields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        field.addEventListener('change', () => this.updateFormSummary());
+                    }
+                });
+
+                // Language toggle
+                const langToggle = document.getElementById('lang-toggle');
+                if (langToggle) {
+                    langToggle.addEventListener('click', () => this.toggleLanguage());
+                    console.log('✅ Language toggle listener attached');
+                }
+
+                // Set minimum date to tomorrow for date inputs (flights need advance booking)
+                const startDateInput = document.getElementById('startDate');
+                const endDateInput = document.getElementById('endDate');
+
+                if (startDateInput) {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                    startDateInput.min = tomorrowStr;
+                    
+                    // Update end date minimum when start date changes
+                    startDateInput.addEventListener('change', (e) => {
+                        if (endDateInput) {
+                            endDateInput.min = e.target.value;
+                        }
+                        this.updateFormSummary();
+                    });
+                    console.log('✅ Start date input configured');
+                }
+
+                if (endDateInput) {
+                    const tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+                    endDateInput.min = tomorrowStr;
+                    console.log('✅ End date input configured');
+                }
+
+                console.log('🎉 All event listeners set up successfully');
+            }
+
+            updateFormSummary() {
+                const formData = this.getFormData();
+                const summarySection = document.getElementById('form-summary');
+                
+                if (!formData.fromCity || !formData.destination || !formData.startDate || !formData.endDate) {
+                    summarySection.style.display = 'none';
+                    return;
+                }
+
+                // Calculate duration
+                const startDate = new Date(formData.startDate);
+                const endDate = new Date(formData.endDate);
+                const duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+                // Update summary fields
+                document.getElementById('summary-route').textContent = `${formData.fromCity} → ${formData.destination}`;
+                document.getElementById('summary-duration').textContent = `${duration} days`;
+                document.getElementById('summary-travelers').textContent = formData.travelers ? `${formData.travelers} ${formData.travelers === '1' ? 'person' : 'people'}` : '-';
+                document.getElementById('summary-budget').textContent = formData.budget ? window.currencyConverter.formatINR(formData.budget) : '-';
+                document.getElementById('summary-theme').textContent = formData.theme ? formData.theme.charAt(0).toUpperCase() + formData.theme.slice(1) : '-';
+                document.getElementById('summary-hotel-budget').textContent = formData.hotelBudget ? formData.hotelBudget.charAt(0).toUpperCase() + formData.hotelBudget.slice(1) : '-';
+
+                summarySection.style.display = 'block';
+            }
+
+            getFormData() {
+                const form = document.getElementById('travel-form');
+                const formData = new FormData(form);
+                
+                return {
+                    fromCity: formData.get('fromCity'),
+                    destination: formData.get('destination'),
+                    theme: formData.get('theme'),
+                    budget: parseFloat(formData.get('budget')) || 0,
+                    travelers: parseInt(formData.get('travelers')) || 1,
+                    startDate: formData.get('startDate'),
+                    endDate: formData.get('endDate'),
+                    hotelBudget: formData.get('hotelBudget'),
+                    language: this.currentLanguage
+                };
+            }
+
+            async handleFormSubmit(e) {
+                e.preventDefault();
+                
+                const travelData = this.getFormData();
+                
+                // Validate form
+                const errors = this.validateForm(travelData);
+                if (errors.length > 0) {
+                    window.ErrorHandler.show(errors.join('. '), 'error');
+                    return;
+                }
+
+                // Calculate duration
+                const startDate = new Date(travelData.startDate);
+                const endDate = new Date(travelData.endDate);
+                travelData.duration = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+
+                console.log('🎯 Travel planning data:', travelData);
+
+                // Save to session storage
+                window.sessionManager.setTravelData(travelData);
+
+                // Show loading
+                this.showLoading();
+
+                try {
+                    // Redirect to flight selection
+                    window.location.href = '/flight-selection';
+                } catch (error) {
+                    console.error('❌ Error:', error);
+                    this.hideLoading();
+                    window.ErrorHandler.show('Failed to proceed to next step. Please try again.', 'error');
+                }
+            }
+
+            validateForm(data) {
+                const errors = [];
+
+                if (!data.fromCity) errors.push('Please select departure city');
+                if (!data.destination) errors.push('Please select destination');
+                if (!data.theme) errors.push('Please select travel theme');
+                if (!data.budget || data.budget < 1000) errors.push('Please enter a valid budget (minimum ₹1,000)');
+                if (!data.travelers) errors.push('Please select number of travelers');
+                if (!data.startDate) errors.push('Please select start date');
+                if (!data.endDate) errors.push('Please select end date');
+
+                // Validate dates
+                const dateError = window.FormValidator.validateDates(data.startDate, data.endDate);
+                if (dateError) errors.push(dateError);
+
+                return errors;
+            }
+
+            showLoading() {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.classList.remove('hidden');
+                }
+            }
+
+            hideLoading() {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.classList.add('hidden');
+                }
+            }
+
+            async toggleLanguage() {
+                const newLang = this.currentLanguage === 'english' ? 'hindi' : 'english';
+                
+                try {
+                    if (window.translations) {
+                        await window.translations.switchLanguage(newLang);
+                        this.currentLanguage = newLang;
+                        
+                        // Update UI
+                        const langSpan = document.getElementById('current-lang');
+                        if (langSpan) {
+                            langSpan.textContent = newLang === 'english' ? 'English' : 'हिंदी';
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ Error switching language:', error);
+                }
+            }
+        }
+
+        // Initialize the form when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.travelPlanningForm = new TravelPlanningForm();
+        });
+    </script>
+</body>
+</html>

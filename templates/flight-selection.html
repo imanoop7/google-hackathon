@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Travel Planner - Select Your Flight</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-plane"></i>
+                <h1>AI Travel Planner</h1>
+                <span class="powered-by">Powered by Google ADK</span>
+            </div>
+            <div class="nav-controls">
+                <button id="back-btn" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back</span>
+                </button>
+                <div class="language-switcher">
+                    <button id="lang-toggle" class="btn-lang">
+                        <i class="fas fa-globe"></i>
+                        <span id="current-lang">English</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Progress Indicator -->
+        <div class="container">
+            <div id="progress-container"></div>
+        </div>
+
+        <!-- Flight Selection Section -->
+        <section class="section active">
+            <div class="container">
+                <div class="section-header">
+                    <h2><i class="fas fa-plane-departure"></i> Choose Your Flight</h2>
+                    <p>Select the best flight option for your journey. All prices are in Indian Rupees.</p>
+                </div>
+
+                <!-- Trip Summary -->
+                <div class="trip-summary-card" id="trip-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Flight Options -->
+                <div class="selection-container">
+                    <div class="selection-header">
+                        <h3><i class="fas fa-filter"></i> Available Flights</h3>
+                        <div class="filter-controls">
+                            <button class="filter-btn" data-filter="price">
+                                <i class="fas fa-sort-amount-down"></i>
+                                Sort by Price
+                            </button>
+                            <button class="filter-btn" data-filter="duration">
+                                <i class="fas fa-clock"></i>
+                                Sort by Duration
+                            </button>
+                            <button class="filter-btn" data-filter="departure">
+                                <i class="fas fa-calendar-alt"></i>
+                                Sort by Departure
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="flight-options" class="options-grid">
+                        <!-- Flight options will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Selection Actions -->
+                <div class="selection-actions">
+                    <button id="continue-btn" class="btn-primary" disabled>
+                        <i class="fas fa-arrow-right"></i>
+                        <span>Continue to Hotels</span>
+                    </button>
+                    
+                    <div class="action-note">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Select a flight to continue to hotel selection</span>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loading" class="loading">
+                    <div class="spinner"></div>
+                    <p>Finding the best flight options for you...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 AI Travel Planner. <span>Powered by Google ADK</span></p>
+        </div>
+    </footer>
+
+    <!-- Include common utilities -->
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/translations.js"></script>
+    
+    <script>
+        class FlightSelection {
+            constructor() {
+                this.travelData = null;
+                this.flightOptions = [];
+                this.selectedFlight = null;
+                this.currentSort = 'price';
+                this.init();
+            }
+
+            async init() {
+                console.log('🛫 Initializing Flight Selection...');
+                
+                // Check if we have travel data
+                this.travelData = window.sessionManager.getTravelData();
+                if (!this.travelData) {
+                    window.ErrorHandler.show('No travel data found. Please start from the beginning.', 'error');
+                    setTimeout(() => window.location.href = '/', 3000);
+                    return;
+                }
+
+                // Render progress indicator
+                const progressContainer = document.getElementById('progress-container');
+                window.progressIndicator.render('flights', progressContainer);
+                
+                // Display trip summary
+                this.displayTripSummary();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Load flight options
+                await this.loadFlightOptions();
+                
+                console.log('✅ Flight selection initialized successfully');
+            }
+
+            displayTripSummary() {
+                const summaryContainer = document.getElementById('trip-summary');
+                const { fromCity, destination, startDate, endDate, travelers, budget, theme } = this.travelData;
+                
+                const duration = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24));
+                
+                summaryContainer.innerHTML = `
+                    <div class="trip-summary">
+                        <h3><i class="fas fa-map-marked-alt"></i> Your Trip Details</h3>
+                        <div class="summary-grid">
+                            <div class="summary-item">
+                                <span class="label">Route:</span>
+                                <span class="value">${fromCity} → ${destination}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Duration:</span>
+                                <span class="value">${duration} days</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Travelers:</span>
+                                <span class="value">${travelers} ${travelers === 1 ? 'person' : 'people'}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Budget:</span>
+                                <span class="value">${window.currencyConverter.formatINR(budget)}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Theme:</span>
+                                <span class="value">${theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Travel Date:</span>
+                                <span class="value">${new Date(startDate).toLocaleDateString('en-IN')}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            setupEventListeners() {
+                // Back button
+                const backBtn = document.getElementById('back-btn');
+                if (backBtn) {
+                    backBtn.addEventListener('click', () => {
+                        window.location.href = '/';
+                    });
+                }
+
+                // Continue button
+                const continueBtn = document.getElementById('continue-btn');
+                if (continueBtn) {
+                    continueBtn.addEventListener('click', () => this.handleContinue());
+                }
+
+                // Filter buttons
+                const filterBtns = document.querySelectorAll('.filter-btn');
+                filterBtns.forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const filter = e.currentTarget.dataset.filter;
+                        this.sortFlights(filter);
+                        
+                        // Update active filter button
+                        filterBtns.forEach(b => b.classList.remove('active'));
+                        e.currentTarget.classList.add('active');
+                    });
+                });
+
+                // Language toggle
+                const langToggle = document.getElementById('lang-toggle');
+                if (langToggle) {
+                    langToggle.addEventListener('click', () => this.toggleLanguage());
+                }
+            }
+
+            async loadFlightOptions() {
+                const { fromCity, destination, startDate, travelers } = this.travelData;
+                
+                try {
+                    const response = await window.apiHelper.post('/api/get-transport-options', {
+                        origin: fromCity,
+                        destination: destination,
+                        travel_date: startDate,
+                        transport_type: 'flight',
+                        travelers: travelers
+                    });
+
+                    if (response.status === "success" && response.options && response.options.length > 0) {
+                        this.flightOptions = response.options.map(flight => {
+                            console.log(`[DEBUG] Flight ${flight.flight_number}: Price = ${flight.price} ${flight.currency}`);
+                            return {
+                                ...flight,
+                                price: Math.round(flight.price), // Keep original price, just round it
+                                id: flight.id || `flight_${Math.random().toString(36).substr(2, 9)}`
+                            };
+                        });
+                    } else if (response.status === "error") {
+                        throw new Error(response.error_message || 'Transport service error');
+                    } else {
+                        throw new Error('No flight data received from API');
+                    }
+
+                    this.displayFlightOptions();
+                    this.hideLoading();
+
+                } catch (error) {
+                    console.error('❌ Error loading flights:', error);
+                    this.showError('Unable to load flight options. Please check your connection and try again.');
+                    this.hideLoading();
+                }
+            }
+
+            showError(message) {
+                const container = document.getElementById('flight-options');
+                container.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Unable to Load Flights</h3>
+                        <p>${message}</p>
+                        <button onclick="window.location.reload()" class="btn btn-primary">
+                            Try Again
+                        </button>
+                        <button onclick="window.location.href='/'" class="btn btn-secondary">
+                            Back to Planning
+                        </button>
+                    </div>
+                `;
+            }
+
+            displayFlightOptions() {
+                const container = document.getElementById('flight-options');
+                
+                if (!this.flightOptions.length) {
+                    container.innerHTML = `
+                        <div class="no-options">
+                            <i class="fas fa-plane-slash"></i>
+                            <h3>No flights found</h3>
+                            <p>We couldn't find any flights for your selected route and date. Please try different dates or contact support.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.flightOptions.map(flight => `
+                    <div class="flight-card" data-flight-id="${flight.id}">
+                        <div class="flight-header">
+                            <div class="airline-info">
+                                <div class="airline-name">${flight.airline}</div>
+                                <div class="flight-number">${flight.flight_number}</div>
+                            </div>
+                            <div class="flight-price">
+                                <div class="price-amount">${window.currencyConverter.formatINR(flight.price)}</div>
+                                <div class="price-note">for ${this.travelData.travelers} ${this.travelData.travelers === 1 ? 'person' : 'people'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flight-details">
+                            <div class="time-info">
+                                <div class="departure">
+                                    <div class="time">${flight.departure_time}</div>
+                                    <div class="city">${this.travelData.fromCity}</div>
+                                </div>
+                                <div class="flight-path">
+                                    <div class="duration">${flight.duration}</div>
+                                    <div class="path-line">
+                                        <i class="fas fa-plane"></i>
+                                    </div>
+                                </div>
+                                <div class="arrival">
+                                    <div class="time">${flight.arrival_time}</div>
+                                    <div class="city">${this.travelData.destination}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flight-features">
+                                <div class="feature">
+                                    <i class="fas fa-suitcase"></i>
+                                    <span>${flight.baggage || '15kg + 7kg cabin'}</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-plane"></i>
+                                    <span>${flight.aircraft || 'Modern Aircraft'}</span>
+                                </div>
+                                ${flight.amenities ? flight.amenities.map(amenity => `
+                                    <div class="feature">
+                                        <i class="fas fa-check"></i>
+                                        <span>${amenity}</span>
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+                            
+                            ${flight.cancellation ? `
+                                <div class="cancellation-policy">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>${flight.cancellation}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        
+                        <div class="flight-actions">
+                            <input type="radio" name="selected-flight" value="${flight.id}" id="flight-${flight.id}">
+                            <label for="flight-${flight.id}" class="select-flight-btn">
+                                <i class="fas fa-check"></i>
+                                Select This Flight
+                            </label>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Add event listeners for flight selection
+                const radioButtons = container.querySelectorAll('input[name="selected-flight"]');
+                radioButtons.forEach(radio => {
+                    radio.addEventListener('change', (e) => this.handleFlightSelection(e.target.value));
+                });
+            }
+
+            sortFlights(criteria) {
+                this.currentSort = criteria;
+                
+                switch (criteria) {
+                    case 'price':
+                        this.flightOptions.sort((a, b) => a.price - b.price);
+                        break;
+                    case 'duration':
+                        this.flightOptions.sort((a, b) => {
+                            const aDuration = parseInt(a.duration.split('h')[0]) * 60 + parseInt(a.duration.split('h')[1]);
+                            const bDuration = parseInt(b.duration.split('h')[0]) * 60 + parseInt(b.duration.split('h')[1]);
+                            return aDuration - bDuration;
+                        });
+                        break;
+                    case 'departure':
+                        this.flightOptions.sort((a, b) => {
+                            const aTime = a.departure_time.replace(':', '');
+                            const bTime = b.departure_time.replace(':', '');
+                            return aTime.localeCompare(bTime);
+                        });
+                        break;
+                }
+                
+                this.displayFlightOptions();
+            }
+
+            handleFlightSelection(flightId) {
+                this.selectedFlight = this.flightOptions.find(flight => flight.id === flightId);
+                
+                if (this.selectedFlight) {
+                    console.log('✈️ Flight selected:', this.selectedFlight);
+                    
+                    // Enable continue button
+                    const continueBtn = document.getElementById('continue-btn');
+                    continueBtn.disabled = false;
+                    
+                    // Visual feedback
+                    const flightCards = document.querySelectorAll('.flight-card');
+                    flightCards.forEach(card => card.classList.remove('selected'));
+                    
+                    const selectedCard = document.querySelector(`[data-flight-id="${flightId}"]`);
+                    if (selectedCard) {
+                        selectedCard.classList.add('selected');
+                    }
+                    
+                    // Update action note
+                    const actionNote = document.querySelector('.action-note span');
+                    if (actionNote) {
+                        actionNote.textContent = `${this.selectedFlight.airline} ${this.selectedFlight.flight_number} selected - ${window.currencyConverter.formatINR(this.selectedFlight.price)}`;
+                    }
+                }
+            }
+
+            handleContinue() {
+                if (!this.selectedFlight) {
+                    window.ErrorHandler.show('Please select a flight to continue.', 'error');
+                    return;
+                }
+
+                console.log('=== FLIGHT SELECTION DEBUG ===');
+                console.log('Selected flight data:', this.selectedFlight);
+                
+                // Save selected flight to session
+                window.sessionManager.setSelectedFlight(this.selectedFlight);
+                
+                // Verify it was saved
+                const savedFlight = window.sessionManager.getSelectedFlight();
+                console.log('Flight data after saving:', savedFlight);
+                
+                // Show success message and redirect
+                window.ErrorHandler.success('Flight selected successfully!');
+                setTimeout(() => {
+                    window.location.href = '/hotel-selection';
+                }, 1000);
+            }
+
+            hideLoading() {
+                const loading = document.getElementById('loading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            }
+
+            async toggleLanguage() {
+                // Language toggle functionality
+                console.log('Language toggle clicked');
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.flightSelection = new FlightSelection();
+        });
+    </script>
+
+    <style>
+        .trip-summary-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .trip-summary h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .summary-item .label {
+            font-weight: 500;
+            color: var(--secondary-color);
+        }
+
+        .summary-item .value {
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .selection-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .selection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .selection-header h3 {
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-controls {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            background: var(--light-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .flight-card {
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .flight-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .flight-card.selected {
+            border-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .flight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .airline-name {
+            font-weight: 600;
+            font-size: 1.125rem;
+            color: var(--text-color);
+        }
+
+        .flight-number {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+
+        .flight-price {
+            text-align: right;
+        }
+
+        .price-amount {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .price-note {
+            font-size: 0.75rem;
+            color: var(--secondary-color);
+        }
+
+        .flight-details {
+            margin-bottom: 1rem;
+        }
+
+        .time-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .departure, .arrival {
+            text-align: center;
+        }
+
+        .departure .time, .arrival .time {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .departure .city, .arrival .city {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .flight-path {
+            flex: 1;
+            text-align: center;
+            position: relative;
+        }
+
+        .duration {
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .path-line {
+            position: relative;
+            height: 2px;
+            background: var(--border-color);
+            margin: 0 2rem;
+        }
+
+        .path-line i {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            color: var(--primary-color);
+            padding: 0.25rem;
+        }
+
+        .flight-features {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+        }
+
+        .feature i {
+            color: var(--success-color);
+        }
+
+        .cancellation-policy {
+            background: var(--light-color);
+            padding: 0.75rem;
+            border-radius: var(--border-radius);
+            font-size: 0.875rem;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .flight-actions {
+            text-align: center;
+        }
+
+        .flight-actions input[type="radio"] {
+            display: none;
+        }
+
+        .select-flight-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .select-flight-btn:hover {
+            background: var(--primary-dark);
+        }
+
+        .flight-actions input[type="radio"]:checked + .select-flight-btn {
+            background: var(--success-color);
+        }
+
+        .selection-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .action-note {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+        }
+
+        .no-options {
+            text-align: center;
+            padding: 3rem;
+            color: var(--secondary-color);
+        }
+
+        .no-options i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .flight-header {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .time-info {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .path-line {
+                height: 2px;
+                width: 100px;
+                margin: 1rem auto;
+            }
+            
+            .filter-controls {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</body>
+</html>
